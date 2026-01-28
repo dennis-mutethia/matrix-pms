@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from routes import apartments, dashboard, landlords, tenants
@@ -24,3 +25,8 @@ app.include_router(apartments.router)
 app.include_router(dashboard.router) 
 app.include_router(landlords.router) 
 app.include_router(tenants.router)
+
+
+@app.get("/")
+async def root():
+    return RedirectResponse("/dashboard")
