@@ -74,6 +74,11 @@ async def get(
     toggle_status_id: Annotated[int | None, Query()] = None,
     delete_id: Annotated[int | None, Query()] = None,
 ):
+    if isinstance(current_user_or_redirect, RedirectResponse):
+        return current_user_or_redirect
+
+    current_user: Users = current_user_or_redirect
+    
     success = None 
     errors = None
     if toggle_status_id:
@@ -138,6 +143,11 @@ async def get_new(
     current_user_or_redirect: Annotated[Users | RedirectResponse, Depends(get_current_user_or_redirect)],
     session: AsyncSession = Depends(get_session)
 ):
+    if isinstance(current_user_or_redirect, RedirectResponse):
+        return current_user_or_redirect
+
+    current_user: Users = current_user_or_redirect
+    
     return templates.TemplateResponse(
         "landlords-new.html",
         {
@@ -162,9 +172,11 @@ async def post_new_landlord(
     bank_account: Optional[str] = Form(None),
     commission_rate: Optional[float] = Form(None)
 ):
-    # ────────────────────────────────────────────────
-    # Very basic server-side validation
-    # (you can make this much stricter depending on your rules)
+    if isinstance(current_user_or_redirect, RedirectResponse):
+        return current_user_or_redirect
+
+    current_user: Users = current_user_or_redirect
+    
     errors = {}
 
     if not name.strip():
