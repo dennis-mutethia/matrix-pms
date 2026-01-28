@@ -1,7 +1,7 @@
-import re
+import re, uuid
 
 from fastapi import APIRouter, Request, Form, Depends, status
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +18,7 @@ async def get_login(
     request: Request,
     session: AsyncSession = Depends(get_session)
 ):
+    print(uuid.uuid4())
     return templates.TemplateResponse(
         "login.html",          
         {
@@ -28,7 +29,6 @@ async def get_login(
 @router.post("/login", response_class=HTMLResponse)
 async def post_login(
     request: Request,
-    response: Response,                     # ← very important!
     session: AsyncSession = Depends(get_session),
     phone: str = Form(...),
     password: str = Form(...)

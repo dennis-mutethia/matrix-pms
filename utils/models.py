@@ -1,40 +1,31 @@
-from typing import Optional
+
 from datetime import datetime
-from uuid import UUID
-from sqlalchemy import func
+from typing import Optional
+from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field
 
 class User_Levels(SQLModel, table=True):
     id: UUID = Field(
+        default_factory=uuid4,
         primary_key=True,
-        index=True,                
-        nullable=False,
-        sa_column_kwargs={"server_default": func.gen_random_uuid()}
+        index=True
     )
     name: str
     level: int = 0
-    description: Optional[str] = None
-    created_at: datetime = Field(nullable=False)
-    created_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
+    description: Optional[str]
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False
     )
-    updated_at: Optional[datetime] = Field()
-    updated_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
-    )
-    
+    created_by: UUID 
+    updated_at: Optional[datetime]
+    updated_by: Optional[UUID]
+
 class Landlords(SQLModel, table=True):
     id: UUID = Field(
+        default_factory=uuid4,
         primary_key=True,
-        index=True,                
-        nullable=False,
-        sa_column_kwargs={"server_default": func.gen_random_uuid()}
+        index=True
     )
     name: str
     phone: str = Field(
@@ -52,27 +43,19 @@ class Landlords(SQLModel, table=True):
     bank_account: Optional[str]
     commission_rate: Optional[float]    
     status: str = "active"
-    created_at: datetime = Field(nullable=False)
-    created_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False
     )
-    updated_at: Optional[datetime] = Field()
-    updated_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
-    )
-     
+    created_by: UUID 
+    updated_at: Optional[datetime]
+    updated_by: Optional[UUID]
+        
 class Users(SQLModel, table=True):
     id: UUID = Field(
+        default_factory=uuid4,
         primary_key=True,
-        index=True,                
-        nullable=False,
-        sa_column_kwargs={"server_default": func.gen_random_uuid()}
+        index=True
     )
     name: str
     phone: str = Field(
@@ -95,56 +78,40 @@ class Users(SQLModel, table=True):
     )
     password: str
     status: str = "active"
-    created_at: datetime = Field(nullable=False)
-    created_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False
     )
-    updated_at: Optional[datetime] = Field()
-    updated_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
-    )
+    created_by: UUID 
+    updated_at: Optional[datetime]
+    updated_by: Optional[UUID]
         
 class Packages(SQLModel, table=True):
     id: UUID = Field(
+        default_factory=uuid4,
         primary_key=True,
-        index=True,                
-        nullable=False,
-        sa_column_kwargs={"server_default": func.gen_random_uuid()}
+        index=True
     )
     name: str
     amount: float
     pay: float
     validity: int
     color: str = None
-    description: Optional[str] = None
-    offer: Optional[str] = None
-    created_at: Optional[str] = None
-    created_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
+    description: Optional[str]
+    offer: Optional[str]
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False
     )
-    updated_at: Optional[datetime] = Field()
-    updated_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
-    )
+    created_by: UUID 
+    updated_at: Optional[datetime]
+    updated_by: Optional[UUID]
     
 class Licenses(SQLModel, table=True):
     id: UUID = Field(
+        default_factory=uuid4,
         primary_key=True,
-        index=True,                
-        nullable=False,
-        sa_column_kwargs={"server_default": func.gen_random_uuid()}
+        index=True
     )
     key: str
     package_id: UUID = Field(
@@ -156,46 +123,30 @@ class Licenses(SQLModel, table=True):
         index=True
     )      
     expires_at: datetime
-    created_at: datetime = Field(nullable=False)
-    created_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False
     )
-    updated_at: Optional[datetime] = Field()
-    updated_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
-    )
+    created_by: UUID 
+    updated_at: Optional[datetime]
+    updated_by: Optional[UUID]
                     
 class Apartments(SQLModel, table=True):
     id: UUID = Field(
+        default_factory=uuid4,
         primary_key=True,
-        index=True,                
-        nullable=False,
-        sa_column_kwargs={"server_default": func.gen_random_uuid()}
+        index=True
     )
     name: str
     location: str
     landlord_id: UUID = Field(
         foreign_key="landlords.id", 
         index=True
-    )     
-    created_at: datetime = Field(nullable=False)
-    created_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
+    )    
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False
     )
-    updated_at: Optional[datetime] = Field()
-    updated_by: Optional[UUID] = Field(
-        default=None,
-        foreign_key="users.id",
-        index=True,
-        nullable=True
-    )
-     
+    created_by: UUID 
+    updated_at: Optional[datetime]
+    updated_by: Optional[UUID]

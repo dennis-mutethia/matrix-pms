@@ -6,7 +6,7 @@ from typing import Optional
 
 from fastapi.responses import RedirectResponse
 import jwt
-from fastapi import Request, Depends, HTTPException, status
+from fastapi import Request, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -55,7 +55,7 @@ async def get_current_user_or_redirect(
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = int(payload.get("sub") or 0)
+        user_id = str(payload.get("sub") or 0)
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, ValueError):
         return RedirectResponse(
             url="/login?next=" + str(request.url),
