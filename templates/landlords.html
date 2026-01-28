@@ -67,9 +67,9 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        <th>Properties</th>
+                        <th class="text-center">Properties</th>
                         <th>Status</th>
-                        <th>Last Login</th>
+                        <th class="text-center">Last Login</th>
                         <th class="text-center">Actions</th>
                     </tr>
                 </thead>
@@ -83,17 +83,15 @@
                         </td>
                         <td>{{ landlord.email }}</td>
                         <td>{{ landlord.phone }}</td>
-                        <td class="apartments-list">
-                            <span class="badge bg-info">{{ landlord.apartments }} apartment(s)</span>
-                        </td>
+                        <td class="text-center">{{ landlord.apartments }}</td>
                         <td>
                             <span class="badge status-badge bg-{{ 'success' if landlord.status=='active' else 'secondary' }}">{{ landlord.status | capitalize }} </span>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <span class="text-muted">Never</span>
                         </td>
                         <td class="action-btns text-center">
-                            <a href="view_houses.php?apartment_id=51" class="btn btn-sm btn-outline-primary">
+                            <a href="view_houses.php?apartment_id=51" class="btn btn-sm btn-outline-info">
                                 <i class="bi bi-eye"></i> Apartments
                             </a>
                             <a href="edit-landlord?id={{ landlord.id }}" class="btn btn-sm btn-outline-primary" title="Edit">
