@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Apartments</h2>
+        <span class="badge bg-dark">9 Total Blocks</span>
+    </div>
+
+    <div class="card shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-brand-header">
+                    <tr>
+                        <th class="ps-3">Name</th>
+                        <th>Location</th>
+                        <th class="text-center">No. of Houses</th>
+                        <th class="text-center">No. of Tenants</th>
+                        <th class="text-end pe-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ps-3 fw-bold">Sweetwaters Apartments</td>
+                        <td><i class="bi bi-geo-alt text-muted"></i> Westlands</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">14</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">6</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="view_houses.php?apartment_id=51" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Stalls
+                                </a>
+                                <a href="edit_apartment.php?id=51" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="delete_apartment.php?id=51" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this apartment and all its houses?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-3 fw-bold">Sandalwood Apartment</td>
+                        <td><i class="bi bi-geo-alt text-muted"></i> Kilimani</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">12</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">4</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="view_houses.php?apartment_id=52" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Stalls
+                                </a>
+                                <a href="edit_apartment.php?id=52" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="delete_apartment.php?id=52" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this apartment and all its houses?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-3 fw-bold">Sanvee Apartment</td>
+                        <td><i class="bi bi-geo-alt text-muted"></i> Utawala</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">7</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">0</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="view_houses.php?apartment_id=53" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Stalls
+                                </a>
+                                <a href="edit_apartment.php?id=53" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="delete_apartment.php?id=53" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this apartment and all its houses?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-3 fw-bold">Kimwa Apartments</td>
+                        <td><i class="bi bi-geo-alt text-muted"></i> Ruiru</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">18</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">4</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="view_houses.php?apartment_id=54" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Stalls
+                                </a>
+                                <a href="edit_apartment.php?id=54" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="delete_apartment.php?id=54" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this apartment and all its houses?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-3 fw-bold">Kipipiri Apartment</td>
+                        <td><i class="bi bi-geo-alt text-muted"></i> Ngara</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">19</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">4</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="view_houses.php?apartment_id=55" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Stalls
+                                </a>
+                                <a href="edit_apartment.php?id=55" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="delete_apartment.php?id=55" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this apartment and all its houses?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-3 fw-bold">Kings Palace Apartment</td>
+                        <td><i class="bi bi-geo-alt text-muted"></i> Ruai</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">16</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">5</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="view_houses.php?apartment_id=56" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Stalls
+                                </a>
+                                <a href="edit_apartment.php?id=56" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="delete_apartment.php?id=56" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this apartment and all its houses?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-3 fw-bold">Mwema Apartment</td>
+                        <td><i class="bi bi-geo-alt text-muted"></i> Ngong</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">15</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">3</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="view_houses.php?apartment_id=57" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Stalls
+                                </a>
+                                <a href="edit_apartment.php?id=57" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="delete_apartment.php?id=57" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this apartment and all its houses?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-3 fw-bold">Amani Apartments</td>
+                        <td><i class="bi bi-geo-alt text-muted"></i> Bahati</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">6</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">0</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="view_houses.php?apartment_id=58" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Stalls
+                                </a>
+                                <a href="edit_apartment.php?id=58" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="delete_apartment.php?id=58" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this apartment and all its houses?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="ps-3 fw-bold">Mwosho Moja Apartment</td>
+                        <td><i class="bi bi-geo-alt text-muted"></i> Pangani</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">5</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill bg-light text-dark border">0</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group shadow-sm">
+                                <a href="view_houses.php?apartment_id=59" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Stalls
+                                </a>
+                                <a href="edit_apartment.php?id=59" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="delete_apartment.php?id=59" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Delete this apartment and all its houses?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<hr>
+{% endblock %}

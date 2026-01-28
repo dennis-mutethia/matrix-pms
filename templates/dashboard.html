@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card premium-card mb-4 text-center">
+    <div class="card-body">
+        <h5 class="fw-bold text-uppercase" style="letter-spacing: 1px;">Premium Package: Unlimited Tenants</h5>
+        <p class="mb-0 text-muted">26 / &infin; tenants used</p>
+    </div>
+</div>
+
+<!-- Updated Stats Row with Landlords -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card bg-apartment">
+            <h5>Apartments</h5>
+            <div class="stat-number">9</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-house">
+            <h5>Houses</h5>
+            <div class="stat-number">112</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card bg-tenant">
+            <h5>Tenants</h5>
+            <div class="stat-number">26</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <a href="landlords.php" class="text-decoration-none">
+            <div class="stat-card bg-landlord">
+                <h5><i class="fas fa-user-tie me-2"></i>Landlords</h5>
+                <div class="stat-number">1</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card bg-paid">
+            <h5><i class="fas fa-money-bill-wave me-2"></i>Paid Rent - January 2026</h5>
+            <div class="stat-number">KES 228,000.00</div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card bg-unpaid">
+            <h5><i class="fas fa-exclamation-circle me-2"></i>Unpaid Rent - January 2026</h5>
+            <div class="stat-number">KES 18,432.50</div>
+        </div>
+    </div>
+</div>
+
+<h4 class="mb-3 fw-bold">Monthly Rent Summary (2026)</h4>
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Month</th>
+                <th>Total Due (KES)</th>
+                <th>Paid (KES)</th>
+                <th>Unpaid (KES)</th>
+                <th>Overpaid (KES)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="fw-bold text-dark">February 2026</td>
+                <td>215,682.50</td>
+                <td class="text-success">0.00</td>
+                <td class="text-danger fw-bold">215,682.50</td>
+                <td class="text-info">0.00</td>
+            </tr>
+            <tr>
+                <td class="fw-bold text-dark">January 2026</td>
+                <td>246,432.50</td>
+                <td class="text-success">228,000.00</td>
+                <td class="text-danger fw-bold">18,432.50</td>
+                <td class="text-info">0.00</td>
+            </tr>
+            <tr>
+                <td class="fw-bold text-dark">December 2025</td>
+                <td>244,700.00</td>
+                <td class="text-success">0.00</td>
+                <td class="text-danger fw-bold">244,700.00</td>
+                <td class="text-info">0.00</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<hr>
+{% endblock %}

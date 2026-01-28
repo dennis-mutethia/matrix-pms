@@ -1,9 +1,7 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
-from routes import tenants
+from routes import apartments, dashboard, tenants
 
 app = FastAPI()
 
@@ -11,4 +9,6 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include all routers
+app.include_router(apartments.router)
 app.include_router(tenants.router)
+app.include_router(dashboard.router) 
