@@ -46,7 +46,7 @@ class Licenses(SQLModel, table=True):
     payment_id: int
     created_at: datetime = Field(nullable=False)
     created_by: int = 0
-    updated_at: datetime = Field(nullable=False)
+    updated_at: Optional[datetime] = Field()
     updated_by: Optional[int] = None 
                 
 class Landlords(SQLModel, table=True):
@@ -54,11 +54,17 @@ class Landlords(SQLModel, table=True):
     name: str
     email: str
     phone: str
-    license_id: int = None
+    id_number: str
+    kra_pin: Optional[str]
+    address: Optional[str]
+    bank_name: Optional[str]
+    bank_account: Optional[str]
+    commission_rate: Optional[float]    
     status: str = "active"
+    license_id: int = None
     created_at: datetime = Field(nullable=False)
     created_by: int = 0
-    updated_at: datetime = Field(nullable=False)
+    updated_at: Optional[datetime] = Field()
     updated_by: Optional[int] = None    
                 
 class Apartments(SQLModel, table=True):
@@ -68,6 +74,6 @@ class Apartments(SQLModel, table=True):
     landlord_id: int = None
     created_at: datetime = Field(nullable=False)
     created_by: int = 0
-    updated_at: datetime = Field(nullable=False)
+    updated_at: Optional[datetime] = Field()
     updated_by: Optional[int] = None    
      

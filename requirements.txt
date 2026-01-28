@@ -1,6 +1,7 @@
 asyncpg 
 fastapi 
 jinja2
+python-multipart
 pyjwt[crypto]
 python-dotenv
 redis

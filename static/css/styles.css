@@ -176,8 +176,8 @@ body {
 }
 
 .thick-hr {
-  height: 3px;           /* ← this controls the thickness */
-  background-color: #FFAA33; 
+  height: 2px;           /* ← this controls the thickness */
+  background-color: var(--brand-color); 
   border: none;            /* remove default border */
   margin: 20px 0;          /* optional: spacing above/below */
 }
