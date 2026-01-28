@@ -1,6 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% if success %}
+<div class="alert alert-success" role="alert">
+    {{ success }}
+</div>
+{% elif errors %}
+<div class="alert alert-danger" role="alert">
+    {{ errors }}
+</div>
+{% endif %}
 
 <div class="container">
     <div class="page-header d-flex justify-content-between align-items-center">
@@ -75,26 +84,25 @@
                         <td>{{ landlord.email }}</td>
                         <td>{{ landlord.phone }}</td>
                         <td class="apartments-list">
-                            <span class="badge bg-secondary">{{ landlord.apartments }} apartment(s)</span>
+                            <span class="badge bg-info">{{ landlord.apartments }} apartment(s)</span>
                         </td>
                         <td>
-                            <span class="badge status-badge bg-success">{{ landlord.status | capitalize }} </span>
+                            <span class="badge status-badge bg-{{ 'success' if landlord.status=='active' else 'secondary' }}">{{ landlord.status | capitalize }} </span>
                         </td>
                         <td>
                             <span class="text-muted">Never</span>
                         </td>
                         <td class="action-btns text-center">
-                            <a href="edit_landlord.php?id=1" class="btn btn-sm btn-outline-primary" title="Edit">
+                            <a href="view_houses.php?apartment_id=51" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Apartments
+                            </a>
+                            <a href="edit-landlord?id={{ landlord.id }}" class="btn btn-sm btn-outline-primary" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <a href="assign_apartments.php?id=1" class="btn btn-sm btn-outline-success"
-                                title="Assign Properties">
-                                <i class="fas fa-building"></i>
-                            </a>
-                            <a href="?toggle=1" class="btn btn-sm btn-outline-warning" title="Toggle Status">
+                            <a href="?toggle_status_id={{ landlord.id }}" class="btn btn-sm btn-outline-warning" title="Toggle Status">
                                 <i class="fas fa-power-off"></i>
                             </a>
-                            <a href="?delete=1" class="btn btn-sm btn-outline-danger"
+                            <a href="?delete_id={{ landlord.id }}" class="btn btn-sm btn-outline-danger"
                                 onclick="return confirm('Are you sure you want to delete this landlord?')"
                                 title="Delete">
                                 <i class="fas fa-trash"></i>

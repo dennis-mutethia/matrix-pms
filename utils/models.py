@@ -16,9 +16,11 @@ class Users(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     phone: str
-    apartment_id: int
+    landlord_id: int
+    apartment_id: Optional[int]
     user_level_id: int = 0
     password: str
+    status: str = "active"
     created_at: datetime = Field(nullable=False)
     created_by: int = 0
     updated_at: Optional[datetime] = Field()

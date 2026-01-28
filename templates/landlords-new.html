@@ -1,11 +1,20 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
+{% if success %}
+<div class="alert alert-success" role="alert">
+    {{ success }}
+</div>
+{% elif errors %}
+<div class="alert alert-danger" role="alert">
+    {{ errors }}
+</div>
+{% endif %}
 <div class="container">
     <div class="page-header d-flex justify-content-between align-items-center">
         <div>
-            <h4 class="fw-bold mb-1"><i class="fas fa-user-plus me-2" style="color: var(--brand-color)"></i>Add New Landlord
+            <h4 class="fw-bold mb-1"><i class="fas fa-user-plus me-2" style="color: var(--brand-color)"></i>Add New
+                Landlord
             </h4>
         </div>
     </div> <br />
@@ -29,7 +38,8 @@
 
                         <div class="mb-3">
                             <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                            <input type="text" name="phone" class="form-control" value="" placeholder="0712345678" required >
+                            <input type="text" name="phone" class="form-control" value="" placeholder="0712345678"
+                                required>
                         </div>
 
                         <div class="mb-3">
@@ -37,40 +47,17 @@
                             <input type="text" name="id_number" class="form-control" value="" required>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">KRA PIN</label>
-                            <input type="text" name="kra_pin" class="form-control" value="">
-                        </div>
+                        
 
-                        <div class="mb-3">
-                            <label class="form-label">Address</label>
-                            <textarea name="address" class="form-control" rows="3"></textarea>
-                        </div>
                     </div>
 
                     <div class="col-md-6">
                         <h5 class="section-title"><i class="fas fa-lock me-2"></i>Account & Banking</h5>
 
                         <div class="mb-3">
-                            <label class="form-label">Password <span class="text-danger">*</span></label>
-                            <input type="password" name="password" class="form-control" required>
-                            <small class="text-muted">Minimum 6 characters</small>
+                            <label class="form-label">KRA PIN</label>
+                            <input type="text" name="kra_pin" class="form-control" value="">
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                            <input type="password" name="confirm_password" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Status</label>
-                            <select name="status" class="form-select">
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
-
-                        <hr>
 
                         <div class="mb-3">
                             <label class="form-label">Bank Name</label>
@@ -94,7 +81,7 @@
 
                 <div class="d-flex justify-content-between">
                     <a href="landlords" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Cancel
+                        <i class="fas fa-arrow-left me-1"></i> Back to Landlords
                     </a>
                     <button type="submit" class="btn btn-warning">
                         <i class="fas fa-save me-1"></i> Save Landlord
@@ -111,7 +98,7 @@
 
 <script>
     $(document).ready(function () {
-        $('#myTable').DataTable({ pageLength: 25, order: [[1, 'asc']] });
+        $('#myTable').DataTable({ pageLength: 25 });
     });
 </script>
 

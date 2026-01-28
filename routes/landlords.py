@@ -1,25 +1,84 @@
 
 import re
 from collections import Counter
-from core.templating import templates
 from datetime import datetime
-from typing import Optional
-from fastapi import APIRouter, Depends, Form, Request
+from typing import Annotated, Optional
+from fastapi import APIRouter, Depends, Form, Request, Query
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import func, select
+from sqlmodel import delete, func, select
 
+from core.templating import templates
 from utils.models import Apartments, Landlords
 from utils.database import get_session
 
 router = APIRouter()
 
+
+async def toggle_landlord_status(    
+    session: AsyncSession,
+    id: int
+):
+    try:
+        # Fetch the existing product
+        statement = (
+            select(Landlords)
+            .where(Landlords.id == id)
+        )
+
+        result = await session.execute(statement)
+        db_landlord = result.scalar_one_or_none()
+
+        if not db_landlord:
+            return None, f"Landlord with ID `{id}` not found"
+        
+        # Update 
+        db_landlord.status = "inactive" if db_landlord.status == "active" else "active"
+        db_landlord.updated_by = 1 #current_user.id
+        db_landlord.updated_at = datetime.now()
+        # Commit changes
+        session.add(db_landlord)
+        await session.commit()
+        await session.refresh(db_landlord)
+      
+        return f"Landlord with ID `{id}` deleted successfully", None
+
+    except Exception as exc:
+        await session.rollback()
+        return None, str(exc)
+async def delete_landlord(    
+    session: AsyncSession,
+    id: int
+):
+    try:
+        stmt = delete(Landlords).where(Landlords.id == id)
+        result = await session.execute(stmt)
+        
+        if result.rowcount == 0:
+            return None, f"Landlord with ID `{id}` not found"
+            
+        await session.commit()
+        return f"Landlord with ID `{id}` deleted successfully", None
+
+    except Exception as exc:
+        await session.rollback()
+        return None, str(exc)
+    
 @router.get("/landlords", response_class=HTMLResponse)
 async def get(
     request: Request,
     session: AsyncSession = Depends(get_session),
     #current_user: Users = Depends(get_current_user)
+    toggle_status_id: Annotated[int | None, Query()] = None,
+    delete_id: Annotated[int | None, Query()] = None,
 ):
+    success = None 
+    errors = None
+    if toggle_status_id:
+        success, errors = await toggle_landlord_status(session, id=toggle_status_id)
+        
+    if delete_id:
+        success, errors = await delete_landlord(session, id=delete_id)
     
     stmt = (
         select(
@@ -28,7 +87,7 @@ async def get(
         )
         .join(Apartments, Apartments.landlord_id == Landlords.id, isouter=True)
         .group_by(Landlords.id)           # ← very important!
-        .order_by(Landlords.id)           # optional but nice
+        .order_by(Landlords.name, Landlords.email, Landlords.phone)           # optional but nice
     )
 
     result = await session.execute(stmt)
@@ -65,10 +124,12 @@ async def get(
             "request": request,
             "active": "landlords",
             "landlords": landlords,  
-            "stats": stats   
+            "stats": stats,
+            "success": success,
+            "errors": errors   
         }
     )
-    
+        
 @router.get("/new-landlord", response_class=HTMLResponse)
 async def get_new(
     request: Request,
@@ -85,7 +146,7 @@ async def get_new(
 
 
 @router.post("/new-landlord", response_class=HTMLResponse)
-async def create_new_landlord(
+async def post_new_landlord(
     request: Request,
     session: AsyncSession = Depends(get_session),
     # current_user: Users = Depends(get_current_user),  # uncomment when auth is ready
@@ -121,7 +182,7 @@ async def create_new_landlord(
 
     if commission_rate is not None and (commission_rate < 0 or commission_rate > 100):
         errors["commission_rate"] = "Commission rate must be between 0 and 100"
-
+        
     # If there are validation errors → re-render form with values & errors
     if errors:
         form_data = {
@@ -151,29 +212,25 @@ async def create_new_landlord(
     now = datetime.utcnow()
     license_id = 1
 
-    new_landlord = Landlords(
-        name=name.strip(),
-        email=email.strip(),
-        phone=phone.strip() if phone else None,
-        id_number=id_number.strip(),
-        kra_pin=kra_pin.strip() if kra_pin else None,
-        address=address.strip() if address else None,
-        bank_name=bank_name.strip() if bank_name else None,
-        bank_account=bank_account.strip() if bank_account else None,
-        commission_rate=commission_rate,
-        license_id=license_id,
-        status="active",
-        created_at=now,
-        created_by=0,           # ← replace with current_user.id when auth is active
-        updated_at=now,
-        updated_by=0,           # ← same
-    )
-
     try:
+        
+        new_landlord = Landlords(
+            name=name.strip().upper(),
+            email=email.strip().lower(),
+            phone=phone.strip(),
+            id_number=id_number.strip(),
+            kra_pin=kra_pin.strip().upper() if kra_pin else None,
+            address=address.strip().upper() if address else None,
+            bank_name=bank_name.strip().upper() if bank_name else None,
+            bank_account=bank_account.strip().upper() if bank_account else None,
+            commission_rate=commission_rate,
+            license_id=license_id,
+            created_at=now,
+            created_by=0
+        )    
         session.add(new_landlord)
         await session.commit()
         await session.refresh(new_landlord)
-
         
         return templates.TemplateResponse(
             "landlords-new.html",
