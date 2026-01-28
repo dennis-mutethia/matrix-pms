@@ -1,0 +1,9 @@
+asyncpg 
+fastapi 
+jinja2
+pyjwt[crypto]
+python-dotenv
+redis
+requests
+sqlmodel 
+uvicorn 

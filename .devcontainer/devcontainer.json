@@ -1,0 +1,17 @@
+{
+    "name": "MATRIX-PMS",
+    "dockerFile": "../Dockerfile",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "ms-python.pylint"
+            ],
+            "settings": {
+                "terminal.integrated.defaultProfile.linux#": "/bin/bash"
+            }
+        }
+    },
+    
+    "forwardPorts": [8000]
+}

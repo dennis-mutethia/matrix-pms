@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <title>Hello FastAPI</title>
+</head>
+<body>
+    <h1>Hello {{ name }}!</h1>
+
+    <ul>
+    {% for item in items %}
+        <li>Item {{ item }}</li>
+    {% endfor %}
+    </ul>
+
+    <!-- Template inheritance works normally -->
+    {% block content %}{% endblock %}
+</body>
+</html>
