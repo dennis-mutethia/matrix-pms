@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Login | YEV Stalls</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border-top: 6px solid #f78f04;
+        }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            background: #f78f04;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin: 0 auto 20px;
+        }
+
+        .btn-login {
+            background: #f78f04;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        .btn-login:hover {
+            background: #d67a02;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .form-control:focus {
+            border-color: #f78f04;
+            box-shadow: 0 0 0 0.25rem rgba(247, 143, 4, 0.1);
+        }
+
+        /* Credential Copy Styles */
+        .credential-box {
+            background: #fff9f0;
+            border: 1px dashed #f78f04;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .copy-badge {
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #f78f04;
+            color: #f78f04;
+            background: white;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .copy-badge:hover {
+            background: #f78f04;
+            color: white;
+        }
+
+        .copy-badge:active {
+            transform: scale(0.95);
+        }
+
+        #togglePassword {
+            cursor: pointer;
+            border-left: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-card">
+        <div class="icon-circle shadow-sm">
+            <img src="/static/images/favicon.png" width="64px" />
+        </div>
+        <h4 class="text-center fw-bold mb-1">Matrix </h4>
+        <p class="text-center text-muted small mb-4">Property Management System</p>
+
+        <div class="credential-box">
+            <h6 class="text-center">Demo Login Credentials</h6>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small text-muted">Phone No: <strong id="userText">0712345678</strong></span>
+                <span class="copy-badge" onclick="copyToClipboard('userText', this)">Copy</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-muted">Pass: <strong id="passText">testing123</strong></span>
+                <span class="copy-badge" onclick="copyToClipboard('passText', this)">Copy</span>
+            </div>
+        </div>
+
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-secondary">Phone No.</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-user text-muted"></i></span>
+                    <input type="text" name="phone" class="form-control border-start-0 ps-0"
+                        placeholder="Enter phone number e.g 0712345678" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-secondary">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-lock text-muted"></i></span>
+                    <input type="password" name="password" id="password"
+                        class="form-control border-start-0 border-end-0 ps-0" placeholder="Enter Password" required>
+                    <span class="input-group-text bg-white" id="togglePassword">
+                        <i class="fas fa-eye text-muted" id="eyeIcon"></i>
+                    </span>
+                </div>
+            </div>
+
+            {% if errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ errors }}
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-login mb-2">ACCESS DASHBOARD</button>
+        </form>
+        <footer class="text-center mt-4">
+            <p class="text-muted small">
+                POWERED BY <span style="color: #f78f04; font-weight: 700; letter-spacing: 1px;">Matrix PMS</span>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Copy function
+        function copyToClipboard(elementId, badge) {
+            const text = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = badge.innerText;
+                badge.innerText = "Copied!";
+                badge.style.background = "#f78f04";
+                badge.style.color = "white";
+
+                setTimeout(() => {
+                    badge.innerText = originalText;
+                    badge.style.background = "white";
+                    badge.style.color = "#f78f04";
+                }, 1500);
+            });
+        }
+
+        // Toggle password visibility
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+        const eyeIcon = document.querySelector('#eyeIcon');
+
+        togglePassword.addEventListener('click', function (e) {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            eyeIcon.classList.toggle('fa-eye');
+            eyeIcon.classList.toggle('fa-eye-slash');
+        });
+    </script>
+
+</body>
+
+</html>

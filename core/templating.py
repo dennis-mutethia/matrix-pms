@@ -1,10 +1,25 @@
 
 from datetime import datetime
+from fastapi import Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
+from functools import wraps
+
+from utils.helper_auth import get_current_user_or_redirect
 
 templates = Jinja2Templates(directory="templates")
 
 templates.env.globals["now"] = datetime.now
 
-# Optional: add globals, filters, etc.
-# templates.env.globals["app_name"] = "My Property Manager"
+def login_required(func):
+    @wraps(func)
+    async def wrapper(request: Request, **kwargs):
+        user_or_redirect = await get_current_user_or_redirect(request)
+        if isinstance(user_or_redirect, RedirectResponse):
+            return user_or_redirect
+
+        # Attach to request.state instead of passing as arg
+        request.state.current_user = user_or_redirect
+
+        return await func(request, **kwargs)
+    return wrapper

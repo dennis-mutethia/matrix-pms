@@ -4,19 +4,20 @@ from collections import Counter
 from datetime import datetime
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Form, Request, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import delete, func, select
 
 from core.templating import templates
-from utils.models import Apartments, Landlords
+from utils.helper_auth import get_current_user_or_redirect
+from utils.models import Apartments, Landlords, Users
 from utils.database import get_session
 
 router = APIRouter()
 
-
 async def toggle_landlord_status(    
     session: AsyncSession,
+    current_user: Users,
     id: int
 ):
     try:
@@ -34,7 +35,7 @@ async def toggle_landlord_status(
         
         # Update 
         db_landlord.status = "inactive" if db_landlord.status == "active" else "active"
-        db_landlord.updated_by = 1 #current_user.id
+        db_landlord.updated_by = current_user.id
         db_landlord.updated_at = datetime.now()
         # Commit changes
         session.add(db_landlord)
@@ -46,6 +47,7 @@ async def toggle_landlord_status(
     except Exception as exc:
         await session.rollback()
         return None, str(exc)
+   
 async def delete_landlord(    
     session: AsyncSession,
     id: int
@@ -67,8 +69,8 @@ async def delete_landlord(
 @router.get("/landlords", response_class=HTMLResponse)
 async def get(
     request: Request,
+    current_user_or_redirect: Annotated[Users | RedirectResponse, Depends(get_current_user_or_redirect)],
     session: AsyncSession = Depends(get_session),
-    #current_user: Users = Depends(get_current_user)
     toggle_status_id: Annotated[int | None, Query()] = None,
     delete_id: Annotated[int | None, Query()] = None,
 ):
@@ -133,8 +135,8 @@ async def get(
 @router.get("/new-landlord", response_class=HTMLResponse)
 async def get_new(
     request: Request,
-    session: AsyncSession = Depends(get_session),
-    #current_user: Users = Depends(get_current_user)
+    current_user_or_redirect: Annotated[Users | RedirectResponse, Depends(get_current_user_or_redirect)],
+    session: AsyncSession = Depends(get_session)
 ):
     return templates.TemplateResponse(
         "landlords-new.html",
@@ -144,14 +146,12 @@ async def get_new(
         }
     )
 
-
 @router.post("/new-landlord", response_class=HTMLResponse)
 async def post_new_landlord(
     request: Request,
+    current_user_or_redirect: Annotated[Users | RedirectResponse, Depends(get_current_user_or_redirect)],
     session: AsyncSession = Depends(get_session),
-    # current_user: Users = Depends(get_current_user),  # uncomment when auth is ready
 
-    # Form fields – match the names used in your landlords-new.html <input name="...">
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(...),
@@ -226,7 +226,7 @@ async def post_new_landlord(
             commission_rate=commission_rate,
             license_id=license_id,
             created_at=now,
-            created_by=0
+            created_by=current_user.id
         )    
         session.add(new_landlord)
         await session.commit()
@@ -245,14 +245,12 @@ async def post_new_landlord(
 
     except Exception as exc:
         await session.rollback()
-        # In production → log the error
-        print(f"Error creating landlord: {exc}")
         return templates.TemplateResponse(
             "landlords-new.html",
             {
                 "request": request,
                 "active": "landlords_new",
-                "errors": {"general": "An error occurred while saving. Please try again."},
+                "errors": {"general": str(exc)},
                 "form_data": request._form._dict,  # best effort
                 "success": None,
             }
