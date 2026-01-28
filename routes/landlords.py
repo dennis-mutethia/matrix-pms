@@ -1,7 +1,7 @@
 
-import re
+import re, uuid
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Form, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -10,7 +10,7 @@ from sqlmodel import delete, func, select
 
 from core.templating import templates
 from utils.helper_auth import get_current_user_or_redirect
-from utils.models import Apartments, Landlords, Users
+from utils.models import Apartments, Landlords, Licenses, Users
 from utils.database import get_session
 
 router = APIRouter()
@@ -225,6 +225,16 @@ async def post_new_landlord(
     license_id = 1
 
     try:
+        new_license = Licenses(
+            key=str(uuid.uuid4()).upper(),
+            package_id=1,
+            expires_at=now + timedelta(days=30),
+            created_at=now,
+            created_by=current_user.id
+        )
+        session.add(new_license)
+        await session.commit()
+        await session.refresh(new_license)
         
         new_landlord = Landlords(
             name=name.strip().upper(),
@@ -236,7 +246,7 @@ async def post_new_landlord(
             bank_name=bank_name.strip().upper() if bank_name else None,
             bank_account=bank_account.strip().upper() if bank_account else None,
             commission_rate=commission_rate,
-            license_id=license_id,
+            license_id=new_license.id,
             created_at=now,
             created_by=current_user.id
         )    
