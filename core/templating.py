@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from functools import wraps
 
-from utils.helper_auth import get_current_user_or_redirect
+from utils.helper_auth import get_current_user
 
 templates = Jinja2Templates(directory="templates")
 
@@ -14,7 +14,7 @@ templates.env.globals["now"] = datetime.now
 def login_required(func):
     @wraps(func)
     async def wrapper(request: Request, **kwargs):
-        user_or_redirect = await get_current_user_or_redirect(request)
+        user_or_redirect = await get_current_user(request)
         if isinstance(user_or_redirect, RedirectResponse):
             return user_or_redirect
 

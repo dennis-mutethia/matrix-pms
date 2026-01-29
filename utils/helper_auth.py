@@ -38,7 +38,7 @@ async def authenticate_user(phone: str, password: str, session: AsyncSession) ->
     return None
 
 
-async def get_current_user_or_redirect(
+async def get_current_user(
     request: Request,
     session: AsyncSession = Depends(get_session)
 ) -> Users:

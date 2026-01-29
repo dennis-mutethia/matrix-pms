@@ -143,6 +143,32 @@ class Apartments(SQLModel, table=True):
         foreign_key="landlords.id", 
         index=True
     )    
+    status: str = "active" 
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False
+    )
+    created_by: UUID 
+    updated_at: Optional[datetime]
+    updated_by: Optional[UUID]
+                    
+class House_Units(SQLModel, table=True):
+    id: UUID = Field(
+        default_factory=uuid4,
+        primary_key=True,
+        index=True
+    )
+    name: str
+    apartment_id: UUID = Field(
+        foreign_key="apartments.id", 
+        index=True
+    )   
+    rent: float 
+    rent_deposit: Optional[float]
+    water_deposit: Optional[float]
+    electricity_deposit: Optional[float]
+    other_deposits: Optional[float] 
+    status: str = "active"
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         nullable=False
