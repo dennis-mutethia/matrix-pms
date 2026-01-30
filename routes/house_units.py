@@ -100,6 +100,8 @@ async def list_house_units(
     ],
     session: AsyncSession = Depends(get_session),
     delete_id: Annotated[str | None, Query()] = None,
+    apartment_id: Annotated[str | None, Query()] = None,
+    status: Annotated[str | None, Query()] = None,
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
@@ -110,7 +112,24 @@ async def list_house_units(
         success, errors, _ = await update_house_unit(
             session, current_user, delete_id, {"status": "deleted"}
         )
+        
+    filters = [
+        House_Units.status != "deleted",
+        Apartments.landlord_id == current_user.landlord_id,
+    ]
 
+    if apartment_id:    
+        try:
+            apartment_id = uuid.UUID(apartment_id)
+            filters.append(House_Units.apartment_id == apartment_id)
+        except ValueError:
+            errors = "Invalid apartment ID"
+
+    if status:
+        filters.append(
+            Tenants.id.is_(None) if status == "vacant" else Tenants.id.is_not(None)
+        )
+    
     stmt = (
         select(
             House_Units,
@@ -119,10 +138,7 @@ async def list_house_units(
         )
         .join(Apartments, House_Units.apartment_id == Apartments.id)
         .join(Tenants, Tenants.house_unit_id == House_Units.id, isouter=True)
-        .where(
-            House_Units.status != "deleted",
-            Apartments.landlord_id == current_user.landlord_id
-        )
+        .where(*filters)
         .order_by(House_Units.name)
     )
     
@@ -152,6 +168,8 @@ async def list_house_units(
             "active": "house_units",
             "house_units": house_units,
             "apartments": apartments,
+            "apartment_id": apartment_id,
+            "status": status,
             "success": success,
             "errors": errors,
         },

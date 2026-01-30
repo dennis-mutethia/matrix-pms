@@ -58,7 +58,6 @@ async def get_login(
 ):
     return render_login(request)
 
-
 @router.post("/login", response_class=HTMLResponse)
 async def post_login(
     request: Request,
@@ -89,26 +88,32 @@ async def post_login(
                 "Incorrect password",
             )
 
-        # Success → create token
         access_token = create_access_token(
             data={"sub": str(user.id)}
         )
 
+        # 🔑 THIS is the missing piece
+        next_url = request.query_params.get("next", "/dashboard")
+
+        # 🛡️ prevent open redirects
+        # if not next_url.startswith("/"):
+        #     next_url = "/dashboard"
+
         redirect = RedirectResponse(
-            url="/dashboard",
+            url=next_url,
             status_code=status.HTTP_303_SEE_OTHER,
         )
         redirect.set_cookie(
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=False,  # set True in production (https)
+            secure=False,
             samesite="lax",
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
         return redirect
 
-    except Exception as exc:
+    except Exception:
         return render_login(
             request,
             "An error occurred. Please try again.",

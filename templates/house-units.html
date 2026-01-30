@@ -34,7 +34,7 @@
                     <select name="apartment_id" class="form-select">
                         <option value="">-- All Apartments --</option>
                         {% for apartment in apartments %}
-                        <option value="{{ apartment.id }}">{{ apartment.name }}</option>
+                        <option value="{{ apartment.id }}" {{ 'selected' if apartment_id==apartment.id else ''}}>{{ apartment.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -42,8 +42,8 @@
                     <label class="small fw-bold text-muted">Occupancy Status</label>
                     <select name="status" class="form-select">
                         <option value="">-- All Status --</option>
-                        <option value="vacant">Vacant (No Tenant)</option>
-                        <option value="occupied">Occupied (Has Tenant)</option>
+                        <option value="vacant" {{ 'selected' if status=='vacant' else '' }}>Vacant (No Tenant)</option>
+                        <option value="occupied" {{ 'selected' if status=='occupied' else '' }}>Occupied (Has Tenant)</option>
                     </select>
                 </div>
                 <div class="col-md-5 d-flex align-items-end gap-2">
