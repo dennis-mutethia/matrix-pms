@@ -176,3 +176,36 @@ class House_Units(SQLModel, table=True):
     created_by: UUID 
     updated_at: Optional[datetime]
     updated_by: Optional[UUID]
+
+class Tenants(SQLModel, table=True):
+    id: UUID = Field(
+        default_factory=uuid4,
+        primary_key=True,
+        index=True
+    )
+    name: str
+    phone: str = Field(
+        unique=True, 
+        index=True
+    )
+    id_number: str = Field(
+        unique=True, 
+        index=True
+    )
+    email: str
+    house_unit_id: UUID = Field(
+        foreign_key="house_units.id", 
+        index=True
+    )   
+    next_of_kin: Optional[str]
+    next_of_kin_phone: Optional[str]
+    occupation: Optional[str]
+    employer: Optional[str]
+    status: str = "active"
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False
+    )
+    created_by: UUID 
+    updated_at: Optional[datetime]
+    updated_by: Optional[UUID]

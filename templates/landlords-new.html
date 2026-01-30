@@ -1,15 +1,6 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% if success %}
-<div class="alert alert-success" role="alert">
-    {{ success }}
-</div>
-{% elif errors %}
-<div class="alert alert-danger" role="alert">
-    {{ errors }}
-</div>
-{% endif %}
 <div class="container">
     <div class="page-header d-flex justify-content-between align-items-center">
         <div>
@@ -91,15 +82,5 @@
         </div>
     </div>
 </div>
-
-{% endblock %}
-
-{% block scripts %}
-
-<script>
-    $(document).ready(function () {
-        $('#myTable').DataTable({ pageLength: 25 });
-    });
-</script>
 
 {% endblock %}

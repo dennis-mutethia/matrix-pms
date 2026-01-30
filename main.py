@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from routes import apartments, dashboard, landlords, login, tenants
+from routes import apartments, dashboard, house_units, landlords, login, tenants
 from utils.database import init_db
 
 
@@ -23,6 +23,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Include all routers
 app.include_router(apartments.router)
 app.include_router(dashboard.router) 
+app.include_router(house_units.router) 
 app.include_router(landlords.router) 
 app.include_router(login.router)
 app.include_router(tenants.router)

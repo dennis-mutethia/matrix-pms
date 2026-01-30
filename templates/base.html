@@ -27,6 +27,20 @@
 
         <hr class="thick-hr">
 
+        {% if success %}
+        <div class="alert alert-success alert-dismissible fade show shadow-sm">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ success }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% elif errors %}
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm">
+            <i class="bi bi-x-circle-fill"></i>
+            {{ errors }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
         {% block content %}
         <!-- Default content goes here -->
         {% endblock %}
