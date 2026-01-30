@@ -11,7 +11,7 @@ from sqlmodel import select, func
 from core.templating import templates
 from utils.database import get_session
 from utils.helper_auth import get_current_user
-from utils.models import Apartments, House_Units, Tenants, Users
+from utils.models import Apartments, House_Units, Landlords, Tenants, Users
 
 router = APIRouter()
 
@@ -30,6 +30,7 @@ async def update_apartment(
     current_user: Users,
     apartment_id: str,
     updates: Dict,
+    action: Optional[str] = 'updated'
 ) -> Tuple[Optional[str], Optional[str], Optional[Apartments]]:
     try:
         apartment_uuid = uuid.UUID(apartment_id)
@@ -55,37 +56,30 @@ async def update_apartment(
         await session.commit()
         await session.refresh(apartment)
 
-        return f"Apartment `{apartment.name}` updated successfully", None, apartment
+        return f"Apartment `{apartment.name}` {action} successfully", None, apartment
 
     except Exception as exc:
         await session.rollback()
         return None, str(exc), None
 
 
-@router.get("/apartments", response_class=HTMLResponse)
-async def list_apartments(
-    request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
-    session: AsyncSession = Depends(get_session),
-    delete_id: Annotated[str | None, Query()] = None,
+
+async def get_apartments_data(    
+    session: AsyncSession,
+    current_user: Users,
 ):
-    if isinstance(current_user, RedirectResponse):
-        return current_user
-
-    success = errors = None
-
-    if delete_id:
-        success, errors, _ = await update_apartment(
-            session, current_user, delete_id, {"status": "deleted"}
-        )
-
+    
     stmt = (
         select(
-            Apartments,
+            Apartments,#
+            Landlords.name.label("landlord"),
             func.count(House_Units.id).label("houses_count"),
             func.count(Tenants.id).label("tenants_count"),
+        )
+        .join(
+            Landlords,
+            Apartments.landlord_id == Landlords.id,
+            isouter=True,
         )
         .join(
             House_Units,
@@ -99,9 +93,10 @@ async def list_apartments(
         )
         .where(
             Apartments.status != "deleted",
-            Apartments.landlord_id == current_user.landlord_id,
+            Landlords.status != "deleted"
         )
         .group_by(Apartments.id)
+        .group_by(Landlords.id)
         .order_by(Apartments.name)
     )
 
@@ -113,10 +108,11 @@ async def list_apartments(
             "id": apartment.id,
             "name": apartment.name,
             "location": apartment.location,
+            "landlord": landlord,
             "houses": houses_count or 0,
             "tenants": tenants_count or 0,
         }
-        for apartment, houses_count, tenants_count in rows
+        for apartment, landlord, houses_count, tenants_count in rows
     ]
 
     # Count stats properly
@@ -128,6 +124,23 @@ async def list_apartments(
         "total_house_units": total_house_units,
         "total_tenants": total_tenants,
     }
+    
+    return apartments, stats
+
+@router.get("/apartments", response_class=HTMLResponse)
+async def list_apartments(
+    request: Request,
+    current_user: Annotated[
+        Users | RedirectResponse, Depends(get_current_user)
+    ],
+    session: AsyncSession = Depends(get_session)
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    success = errors = None
+
+    apartments, stats = await get_apartments_data(session, current_user)
     
     return templates.TemplateResponse(
         "apartments.html",
@@ -142,6 +155,43 @@ async def list_apartments(
     )
 
 
+@router.post("/apartments", response_class=HTMLResponse)
+async def delete_apartment(
+    request: Request,
+    current_user: Annotated[
+        Users | RedirectResponse, Depends(get_current_user)
+    ],
+    session: AsyncSession = Depends(get_session),
+    delete_id: Optional[str] = Form(None),
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    success = errors = None
+    
+    if delete_id:
+        success, errors, _ = await update_apartment(
+            session, 
+            current_user, 
+            delete_id, 
+            {"status": "deleted"},
+            action='deleted'
+        )
+        
+    apartments, stats = await get_apartments_data(session, current_user)
+
+    return templates.TemplateResponse(
+        "apartments.html",
+        {
+            "request": request,
+            "active": "apartments",
+            "apartments": apartments,
+            "stats": stats,
+            "success": success,
+            "errors": errors,
+        },
+    )
+    
 @router.get("/new-apartment", response_class=HTMLResponse)
 async def new_apartment_form(
     request: Request,

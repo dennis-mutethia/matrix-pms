@@ -57,6 +57,7 @@
                         <th>#</th>
                         <th>Name</th>
                         <th>Location</th>
+                        <th>Landlord</th>
                         <th class="text-center">No. of Houses</th>
                         <th class="text-center">No. of Tenants</th>
                         <th class="text-center">Actions</th>
@@ -68,6 +69,7 @@
                         <td>{{ loop.index }}.</td>
                         <td class="ps-3 fw-bold">{{ apartment.name }}</td>
                         <td>{{ apartment.location }}</td>
+                        <td>{{ apartment.landlord }}</td>
                         <td class="text-center">
                             <span class="badge rounded-pill bg-light text-dark border">{{ apartment.houses }}</span>
                         </td>
@@ -76,16 +78,19 @@
                         </td>
                         <td class="text-center">
                             <div class="btn-group shadow-sm">
-                                <a href="house-units?apartment_id={{ apartment.id }}" class="btn btn-sm btn-outline-primary">
+                                <a href="house-units?apartment_id={{ apartment.id }}"
+                                    class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye"></i> Houses
                                 </a>
                                 <a href="edit-apartment?id={{ apartment.id }}" class="btn btn-sm btn-outline-warning">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a href="?delete_id={{ apartment.id }}" class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm('Delete this apartment and all its houses?')">
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal"
+                                    onclick="setDeleteValues('{{ apartment.id }}', '{{ apartment.name }}')"
+                                    title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -101,9 +106,11 @@
 {% block scripts %}
 
 <script>
+
     $(document).ready(function () {
         $('#myTable').DataTable({ pageLength: 25, order: [[1, 'asc']] });
-    });
+    });    
+
 </script>
 
 {% endblock %}

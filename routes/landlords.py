@@ -73,6 +73,7 @@ async def update_landlord(
     current_user: Users,
     landlord_id: str,
     updates: Dict,
+    action: Optional[str] = 'updated'
 ) -> Tuple[Optional[str], Optional[str], Optional[Landlords]]:
     try:
         landlord_uuid = uuid.UUID(landlord_id)
@@ -101,42 +102,16 @@ async def update_landlord(
         await session.commit()
         await session.refresh(landlord)
 
-        return f"Landlord `{landlord.name}` updated successfully", None, landlord
+        return f"Landlord `{landlord.name}` {action} successfully", None, landlord
 
     except Exception as exc:
         await session.rollback()
         return None, str(exc), None
 
 
-# ─────────────────────────────────────────────
-# List Landlords
-# ─────────────────────────────────────────────
-@router.get("/landlords", response_class=HTMLResponse)
-async def list_landlords(
-    request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
-    session: AsyncSession = Depends(get_session),
-    toggle_status_id: Annotated[str | None, Query()] = None,
-    delete_id: Annotated[str | None, Query()] = None,
+async def get_landlords_data(    
+    session: AsyncSession
 ):
-    if isinstance(current_user, RedirectResponse):
-        return current_user
-
-    current_user = current_user
-    success = errors = None
-
-    if toggle_status_id:
-        success, errors, _ = await update_landlord(
-            session, current_user, toggle_status_id, {"toggle_status": True}
-        )
-
-    if delete_id:
-        success, errors, _ = await update_landlord(
-            session, current_user, delete_id, {"status": "deleted"}
-        )
-
     stmt = (
         select(
             Landlords,
@@ -180,6 +155,32 @@ async def list_landlords(
         "with_properties": apt_counts["with"],
         "without_properties": apt_counts["without"],
     }
+    
+    return landlords, stats
+
+# ─────────────────────────────────────────────
+# List Landlords
+# ─────────────────────────────────────────────
+@router.get("/landlords", response_class=HTMLResponse)
+async def list_landlords(
+    request: Request,
+    current_user: Annotated[
+        Users | RedirectResponse, Depends(get_current_user)
+    ],
+    session: AsyncSession = Depends(get_session),
+    toggle_status_id: Annotated[str | None, Query()] = None,
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    success = errors = None
+
+    if toggle_status_id:
+        success, errors, _ = await update_landlord(
+            session, current_user, toggle_status_id, {"toggle_status": True}
+        )
+
+    landlords, stats = await get_landlords_data(session)
 
     return templates.TemplateResponse(
         "landlords.html",
@@ -193,6 +194,43 @@ async def list_landlords(
         },
     )
 
+
+@router.post("/landlords", response_class=HTMLResponse)
+async def delete_landlord(
+    request: Request,
+    current_user: Annotated[
+        Users | RedirectResponse, Depends(get_current_user)
+    ],
+    session: AsyncSession = Depends(get_session),
+    delete_id: Optional[str] = Form(None),
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    success = errors = None
+    
+    if delete_id:
+        success, errors, _ = await update_landlord(
+            session, 
+            current_user, 
+            delete_id, 
+            {"status": "deleted"},
+            action='deleted'
+        )
+        
+    landlords, stats = await get_landlords_data(session)
+
+    return templates.TemplateResponse(
+        "landlords.html",
+        {
+            "request": request,
+            "active": "landlords",
+            "landlords": landlords,
+            "stats": stats,
+            "success": success,
+            "errors": errors,
+        },
+    )
 
 # ─────────────────────────────────────────────
 # New Landlord
