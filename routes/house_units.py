@@ -68,12 +68,12 @@ async def update_house_unit(
 
     try:
         result = await session.execute(
-            select(Apartments).where(Apartments.id == house_unit_uuid)
+            select(House_Units).where(House_Units.id == house_unit_uuid)
         )
         house_unit = result.scalar_one_or_none()
 
         if not house_unit:
-            return None, f"Apartment `{house_unit_id}` not found", None
+            return None, f"House Unit `{house_unit_id}` not found", None
 
         for field, value in updates.items():
             if field not in READ_ONLY_FIELDS:
@@ -85,7 +85,7 @@ async def update_house_unit(
         await session.commit()
         await session.refresh(house_unit)
 
-        return f"Apartment `{house_unit.name}` updated successfully", None, house_unit
+        return f"House Unit `{house_unit.name}` updated successfully", None, house_unit
 
     except Exception as exc:
         await session.rollback()
@@ -261,7 +261,7 @@ async def edit_house_unit_form(
         )
 
     house_unit = (
-        await session.execute(select(Apartments).where(Apartments.id == house_unit_id))
+        await session.execute(select(House_Units).where(House_Units.id == house_unit_id))
     ).scalar_one_or_none()
 
     if not house_unit:
@@ -274,12 +274,15 @@ async def edit_house_unit_form(
             },
         )
 
+    apartments = await get_apartments(session, current_user)
+    
     return templates.TemplateResponse(
         "house-units-edit.html",
         {
             "request": request,
             "active": "house_units",
             "house_unit": house_unit,
+            "apartments": apartments
         },
     )
 
@@ -291,21 +294,28 @@ async def edit_house_unit(
         Users | RedirectResponse, Depends(get_current_user)
     ],
     session: AsyncSession = Depends(get_session),
-    id: Annotated[str | None, Query()] = None,
+    id: Annotated[str | None, Query()] = None,         
     name: str = Form(...),
-    location: str = Form(...)
+    apartment_id: str = Form(...),
+    rent: float = Form(...),
+    rent_deposit: float = Form(...),
+    water_deposit: Optional[float] = Form(None),
+    electricity_deposit: Optional[float] = Form(None),
+    other_deposits: Optional[float] = Form(None),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
     data = normalize_house_unit_data(locals())
-
+    
     success, errors, house_unit = await update_house_unit(
         session,
         current_user,
         id,
         data,
     )
+    
+    apartments = await get_apartments(session, current_user)
 
     return templates.TemplateResponse(
         "house-units-edit.html",
@@ -315,5 +325,6 @@ async def edit_house_unit(
             "success": success,
             "errors": errors,
             "house_unit": house_unit,
+            "apartments": apartments
         },
     )

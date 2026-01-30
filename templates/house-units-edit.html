@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="fas fa-pencil  me-2" style="color: var(--brand-color)"></i>Update
+                House Unit
+            </h4>
+        </div>
+    </div> <br />
+
+    <div class="card card-custom">
+        <div class="card-body p-4">
+            <form method="POST" action="">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="section-title"><i class="fas fa-circle-info me-2"></i>Required Information</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">House No. <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{ house_unit.name }}" placeholder="A105"
+                                required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Attach to Apartment </label>
+                            <select name="apartment_id" class="form-select border-brand" required>
+                                {% for apartment in apartments %}
+                                <option value="{{ apartment.id }}" {{ 'selected' if house_unit.apartment_id==apartment.id else ''}}>{{ apartment.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Monthly Rent Amount <span class="text-danger">*</span></label>
+                            <input type="number" name="rent" class="form-control" min="100" value="{{ house_unit.rent }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Rent Deposit <span class="text-danger">*</span></label>
+                            <input type="number" name="rent_deposit" class="form-control" min="100" value="{{ house_unit.rent_deposit }}" required>
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="section-title"><i class="fas fa-unlock me-2"></i>Other Deposits</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Water </label>
+                            <input type="number" name="water_deposit" class="form-control" min="0" value="{{ house_unit.water_deposit }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Electricity</label>
+                            <input type="number" name="electricity_deposit" class="form-control" min="0" value="{{ house_unit.electricity_deposit }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Others</label>
+                            <input type="number" name="other_deposits" class="form-control" min="0" value="{{ house_unit.other_deposits }}">
+                        </div>
+
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-between">
+                    <a href="house-units" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to House Units
+                    </a>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-1"></i> Save House Unit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
