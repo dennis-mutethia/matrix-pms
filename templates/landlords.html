@@ -67,7 +67,7 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        <th class="text-center">Properties</th>
+                        <th class="text-center">Apartments</th>
                         <th>Status</th>
                         <th class="text-center">Last Login</th>
                         <th class="text-center">Actions</th>
@@ -83,7 +83,7 @@
                         </td>
                         <td>{{ landlord.email }}</td>
                         <td>{{ landlord.phone }}</td>
-                        <td class="text-center">{{ landlord.apartments }}</td>
+                        <td class="text-center"><span class="badge rounded-pill bg-light text-dark border">{{ landlord.apartments }}</span></td>
                         <td>
                             <span class="badge status-badge bg-{{ 'success' if landlord.status=='active' else 'secondary' }}">{{ landlord.status | capitalize }} </span>
                         </td>

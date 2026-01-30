@@ -35,8 +35,7 @@
             <div class="card card-custom bg-success text-dark">
                 <div class="card-body">
                     <h6>Total Tenants</h6>
-                    <h3 class="mb-0">
-                        0 </h3>
+                    <h3 class="mb-0">{{ stats.total_tenants }}</h3>
                 </div>
             </div>
         </div>
@@ -44,8 +43,7 @@
             <div class="card card-custom bg-danger text-white">
                 <div class="card-body">
                     <h6>Vacant House Units</h6>
-                    <h3 class="mb-0">
-                        1 </h3>
+                    <h3 class="mb-0">{{ stats.total_house_units-stats.total_tenants }}</h3>
                 </div>
             </div>
         </div>

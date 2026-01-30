@@ -11,7 +11,7 @@ from sqlmodel import select, func
 from core.templating import templates
 from utils.database import get_session
 from utils.helper_auth import get_current_user
-from utils.models import Apartments, House_Units, Users
+from utils.models import Apartments, House_Units, Tenants, Users
 
 router = APIRouter()
 
@@ -82,15 +82,29 @@ async def list_apartments(
         )
 
     stmt = (
-        select(Apartments, func.count(House_Units.id).label("houses_count"))
-        .join(House_Units, House_Units.apartment_id == Apartments.id, isouter=True)
+        select(
+            Apartments,
+            func.count(House_Units.id).label("houses_count"),
+            func.count(Tenants.id).label("tenants_count"),
+        )
+        .join(
+            House_Units,
+            House_Units.apartment_id == Apartments.id,
+            isouter=True,
+        )
+        .join(
+            Tenants,
+            Tenants.house_unit_id == House_Units.id,
+            isouter=True,
+        )
         .where(
             Apartments.status != "deleted",
-            Apartments.landlord_id == current_user.landlord_id
+            Apartments.landlord_id == current_user.landlord_id,
         )
         .group_by(Apartments.id)
         .order_by(Apartments.name)
     )
+
 
     rows = (await session.execute(stmt)).all()
 
@@ -100,20 +114,19 @@ async def list_apartments(
             "name": apartment.name,
             "location": apartment.location,
             "houses": houses_count or 0,
+            "tenants": tenants_count or 0,
         }
-        for apartment, houses_count in rows
+        for apartment, houses_count, tenants_count in rows
     ]
 
     # Count stats properly
     total_house_units = sum(a["houses"] for a in apartments)
-    #vacant_house_units = sum(1 for a in apartments if a["houses"] == 0)
+    total_tenants = sum(a["tenants"] for a in apartments)
 
     stats = {
         "total_apartments": len(apartments),
         "total_house_units": total_house_units,
-        # "vacant_house_units": vacant_house_units,
-        # If you have tenants info, you can add total_tenants here
-        # "total_tenants": sum(a["tenants"] for a in apartments)
+        "total_tenants": total_tenants,
     }
     
     return templates.TemplateResponse(

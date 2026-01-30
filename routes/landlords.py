@@ -6,6 +6,7 @@ from typing import Annotated, Dict, Optional, Tuple
 
 from fastapi import APIRouter, Depends, Form, Request, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, func
 
@@ -137,12 +138,19 @@ async def list_landlords(
         )
 
     stmt = (
-        select(Landlords, func.count(Apartments.id))
-        .join(Apartments, Apartments.landlord_id == Landlords.id, isouter=True)
-        .where(
-            Landlords.status != "deleted",
-            Apartments.status != "deleted"
+        select(
+            Landlords,
+            func.count(Apartments.id).label("apartments_count"),
         )
+        .join(
+            Apartments,
+            and_(
+                Apartments.landlord_id == Landlords.id,
+                Apartments.status != "deleted",
+            ),
+            isouter=True,
+        )
+        .where(Landlords.status != "deleted")
         .group_by(Landlords.id)
         .order_by(Landlords.name)
     )
