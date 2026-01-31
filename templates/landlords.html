@@ -13,6 +13,27 @@
         </a>
     </div> <br />
 
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body bg-white rounded">
+
+            <form method="GET" class="row g-3 align-items-end">
+                                
+                <div class="col-md d-flex justify-content-end ms-auto">
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="showDeleted" {% if
+                            request.query_params.get('show_deleted')=='true' %}checked{% endif %}
+                            onchange="toggleDeleted(this)">
+                        <label class="small fw-bold text-muted form-check-label" for="showDeleted">
+                            Show Deleted
+                        </label>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
     <!-- Stats -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
@@ -60,7 +81,6 @@
                         <th>Phone</th>
                         <th class="text-center">Apartments</th>
                         <th>Status</th>
-                        <th class="text-center">Last Login</th>
                         <th class="text-center">Actions</th>
                     </tr>
                 </thead>
@@ -80,9 +100,6 @@
                             <span
                                 class="badge status-badge bg-{{ 'success' if landlord.status=='active' else 'secondary' }}">{{
                                 landlord.status | capitalize }} </span>
-                        </td>
-                        <td class="text-center">
-                            <span class="text-muted">Never</span>
                         </td>
                         <td class="action-btns text-center">
                             <a href="apartments?landlord_id={{ landlord.id }}" class="btn btn-sm btn-outline-info">

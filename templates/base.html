@@ -16,20 +16,42 @@
 <body>
     <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModal"
         aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="deleteModalTitle">Confirm Delete</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    Click <b>CONFIRM DELETE</b> to delete <b id="delete_name"></b> from the System
+                    Click <code>Confirm Delete</code> to delete <b id="delete_name"></b> from the System
                 </div>
                 <form method="POST">
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button id="delete_id" name="delete_id" type="submit" class="btn btn-danger" value="">Confirm
                             Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="restoreModal" tabindex="-1" role="dialog" aria-labelledby="restoreModal"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="restoreModalTitle">Confirm Restore</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Click <code>Confirm Restore</code> to restore <b id="restore_name"></b> back into the System
+                </div>
+                <form method="POST">
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button id="restore_id" name="restore_id" type="submit" class="btn btn-success" value="">Confirm
+                            Restore</button>
                     </div>
                 </form>
             </div>
@@ -90,6 +112,23 @@
         function setDeleteValues(id, name) {
             document.getElementById('delete_id').value = id;
             document.getElementById('delete_name').innerHTML = name;
+        }
+
+        function setRestoreValues(id, name) {
+            document.getElementById('restore_id').value = id;
+            document.getElementById('restore_name').innerHTML = name;
+        }
+
+        function toggleDeleted(checkbox) {
+            const url = new URL(window.location.href);
+
+            if (checkbox.checked) {
+                url.searchParams.set("show_deleted", "true");
+            } else {
+                url.searchParams.delete("show_deleted");
+            }
+
+            window.location.href = url.toString();
         }
 
     </script>

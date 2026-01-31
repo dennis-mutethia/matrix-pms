@@ -28,8 +28,9 @@
 
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body bg-white rounded">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4">
+
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
                     <label class="small fw-bold text-muted">Filter by Landlord</label>
                     <select name="landlord_id" class="form-select">
                         <option value="">-- All Landlords --</option>
@@ -40,7 +41,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="small fw-bold text-muted">Filter by Apartment</label>
                     <select name="apartment_id" class="form-select">
                         <option value="">-- All Apartments --</option>
@@ -51,7 +52,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="small fw-bold text-muted">Occupancy Status</label>
                     <select name="status" class="form-select">
                         <option value="">-- All Status --</option>
@@ -60,9 +61,21 @@
                         </option>
                     </select>
                 </div>
-                <div class="col-md-5 d-flex align-items-end gap-2">
+
+                <div class="col-md-2 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-info">Apply Filters</button>
                     <a href="house-units" class="btn btn-outline-secondary">Reset</a>
+                </div>
+
+                <div class="col-md d-flex justify-content-end ms-auto">
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="showDeleted" {% if
+                            request.query_params.get('show_deleted')=='true' %}checked{% endif %}
+                            onchange="toggleDeleted(this)">
+                        <label class="small fw-bold text-muted form-check-label" for="showDeleted">
+                            Show Deleted
+                        </label>
+                    </div>
                 </div>
             </form>
         </div>

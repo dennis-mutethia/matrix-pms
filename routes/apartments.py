@@ -106,13 +106,17 @@ async def render_apartments(
     request: Request,
     session: AsyncSession,
     landlord_id: Optional[uuid.UUID] = None,
+    show_deleted: bool = False,
     success: Optional[str] = None,
     errors: Optional[str] = None,
 ):
-    filters = [
-        Apartments.status != "deleted",
-        Landlords.status != "deleted",
-    ]
+    filters = []
+    
+    if not show_deleted:
+        filters = [
+            Apartments.status != "deleted",
+            Landlords.status != "deleted",
+        ]
 
     if landlord_id:
         filters.append(Landlords.id == landlord_id)
@@ -139,6 +143,7 @@ async def render_apartments(
             "id": a.id,
             "name": a.name,
             "location": a.location,
+            "status": a.status,
             "landlord": landlord,
             "houses": houses or 0,
             "tenants": tenants or 0,
@@ -219,27 +224,30 @@ async def render_edit_apartment(
 # ------------------------------------------------------------------
 
 @router.get("/apartments", response_class=HTMLResponse)
-async def list_apartments(
+async def fetch(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],    
     session: AsyncSession = Depends(get_session),
     landlord_id: Optional[str] = Query(None),
+    show_deleted: bool = Query(False),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
     landlord_uuid, errors = parse_uuid(landlord_id, "Invalid landlord ID")
 
-    return await render_apartments(request, session, landlord_uuid, errors=errors)
+    return await render_apartments(request, session, landlord_uuid, show_deleted, errors=errors)
 
 
 @router.post("/apartments", response_class=HTMLResponse)
-async def delete_apartment(
+async def post(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     landlord_id: Optional[str] = Query(None),
+    show_deleted: bool = Query(False),
     delete_id: Optional[str] = Form(None),
+    restore_id: Optional[str] = Form(None),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
@@ -247,16 +255,19 @@ async def delete_apartment(
     landlord_uuid, errors = parse_uuid(landlord_id, "Invalid landlord ID")
 
     success = None
-    if delete_id:
+        
+    if delete_id or restore_id:
         success, errors, _ = await update_apartment(
             session,
             current_user,
-            delete_id,
-            {"status": "deleted"},
-            action="deleted",
+            delete_id if delete_id else restore_id,
+            {
+                "status": "deleted" if delete_id else 'active'
+            },
+            "deleted" if delete_id else 'restored'
         )
 
-    return await render_apartments(request, session, landlord_uuid, success, errors)
+    return await render_apartments(request, session, landlord_uuid, show_deleted, success, errors)
 
 
 @router.get("/new-apartment", response_class=HTMLResponse)
