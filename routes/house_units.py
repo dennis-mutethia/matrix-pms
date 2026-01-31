@@ -7,19 +7,14 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from core.templating import templates
+from core.templating import READ_ONLY_FIELDS, templates
 from utils.database import get_session
-from utils.helper_auth import require_user
+from utils.helpers import get_apartments, get_landlords, require_user
 from utils.models import Apartments, House_Units, Landlords, Tenants, Users
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# ─────────────────────────────────────────────
-# Constants
-# ─────────────────────────────────────────────
-READ_ONLY_FIELDS = {"id", "created_at", "created_by"}
 
 
 # ─────────────────────────────────────────────
@@ -45,28 +40,6 @@ def normalize_house_unit_data(data: Dict) -> Dict:
         "electricity_deposit": data.get("electricity_deposit") or 0,
         "other_deposits": data.get("other_deposits") or 0,
     }
-
-
-async def get_landlords(session: AsyncSession) -> list[dict]:
-    stmt = (
-        select(Landlords)
-        .where(Landlords.status != "deleted")
-        .order_by(Landlords.name)
-    )
-    landlords = (await session.execute(stmt)).scalars().all()
-
-    return [{"id": l.id, "name": l.name} for l in landlords]
-
-
-async def get_apartments(session: AsyncSession) -> list[dict]:
-    stmt = (
-        select(Apartments)
-        .where(Apartments.status != "deleted")
-        .order_by(Apartments.name)
-    )
-    apartments = (await session.execute(stmt)).scalars().all()
-
-    return [{"id": a.id, "name": a.name} for a in apartments]
 
 
 async def update_house_unit(
@@ -143,7 +116,7 @@ async def get_house_units_data(
             House_Units,
             Apartments.name.label("apartment"),
             Landlords.name.label("landlord"),
-            Tenants.name.label("tenant"),
+            Tenants.name.label("tenant")
         )
         .join(Apartments, House_Units.apartment_id == Apartments.id)
         .join(Landlords, Apartments.landlord_id == Landlords.id)
@@ -208,6 +181,55 @@ async def render_house_units(
             "status": status,
             "success": success,
             "errors": errors,
+        },
+    )
+
+
+async def render_new_house_unit(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    success: Optional[str] = None,
+    errors: Optional[Dict] = None,
+    form_data: Optional[Dict] = None,
+):
+    return templates.TemplateResponse(
+        "house-units-new.html",
+        {
+            "request": request,
+            "active": "new_house_unit",
+            "apartments": await get_apartments(session),
+            "success": success,
+            "errors": errors,
+            "form_data": form_data or {},
+        },
+    )
+
+
+async def render_edit_house_unit(
+    request: Request,
+    session: AsyncSession,
+    house_unit_id: uuid.UUID,
+    success: Optional[str] = None,
+    errors: Optional[Dict] = None,
+):
+    house_unit = (
+        await session.execute(
+            select(House_Units).where(House_Units.id == house_unit_id)
+        )
+    ).scalar_one_or_none()
+
+    if not house_unit:
+        errors = "House Unit not found"
+
+    return templates.TemplateResponse(
+        "house-units-edit.html",
+        {
+            "request": request,
+            "active": "house_units",
+            "house_unit": house_unit,
+            "apartments": await get_apartments(session),
+            "success": success,
+            "errors": errors
         },
     )
 
@@ -293,14 +315,7 @@ async def new_house_unit_form(
     if isinstance(current_user, RedirectResponse):
         return current_user
 
-    return templates.TemplateResponse(
-        "house-units-new.html",
-        {
-            "request": request,
-            "active": "new_house_unit",
-            "apartments": await get_apartments(session),
-        },
-    )
+    return await render_new_house_unit(request, session)
 
 
 @router.post("/new-house-unit", response_class=HTMLResponse)
@@ -319,36 +334,85 @@ async def create_house_unit(
     if isinstance(current_user, RedirectResponse):
         return current_user
 
+    success = errors = ''
+    
     data = normalize_house_unit_data(locals())
     house_unit = House_Units(
         **data,
         created_at=datetime.utcnow(),
         created_by=current_user.id,
     )
-
+    
     try:
         session.add(house_unit)
         await session.commit()
-
-        return templates.TemplateResponse(
-            "house-units-new.html",
-            {
-                "request": request,
-                "active": "new_house_unit",
-                "apartments": await get_apartments(session),
-                "success": f"House Unit `{house_unit.name}` created successfully",
-            },
-        )
+        success = f"House Unit `{house_unit.name}` created successfully"
 
     except Exception as exc:
         logger.error(exc)
         await session.rollback()
-        return templates.TemplateResponse(
-            "house-units-new.html",
-            {
-                "request": request,
-                "active": "new_house_unit",
-                "apartments": await get_apartments(session),
-                "errors": str(exc),
-            },
-        )
+        errors = str(exc)        
+    
+    return await render_new_house_unit(
+        request, 
+        session, 
+        success=success,
+        errors=errors,
+        form_data=locals()
+    )
+    
+
+@router.get("/edit-house-unit", response_class=HTMLResponse)
+async def edit_house_unit_form(
+    request: Request,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
+    session: AsyncSession = Depends(get_session),
+    id: Optional[str] = Query(None),
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+    
+    house_unit_id, errors = parse_uuid(id, "Invalid house unit ID")
+
+    return await render_edit_house_unit(
+        request, 
+        session, 
+        house_unit_id, 
+        errors=errors
+    )
+    
+
+@router.post("/edit-house-unit", response_class=HTMLResponse)
+async def edit_house_unit(
+    request: Request,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
+    session: AsyncSession = Depends(get_session),
+    id: str = Query(...),
+    name: str = Form(...),
+    apartment_id: str = Form(...),
+    rent: float = Form(...),
+    rent_deposit: float = Form(...),
+    water_deposit: Optional[float] = Form(None),
+    electricity_deposit: Optional[float] = Form(None),
+    other_deposits: Optional[float] = Form(None),
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    data = normalize_house_unit_data(locals())
+    success, errors, _ = await update_house_unit(
+        session,
+        current_user,
+        id,
+        data
+    )
+
+    house_unit_id, _ = parse_uuid(id, "")
+    return await render_edit_house_unit(
+        request, 
+        session, 
+        house_unit_id, 
+        success=success, 
+        errors=errors
+    )
+

@@ -6,12 +6,12 @@ from typing import Optional
 
 from fastapi.responses import RedirectResponse
 import jwt
-from fastapi import HTTPException, Request, Depends, status
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from utils.database import get_session
-from utils.models import Users
+from utils.models import Apartments, Landlords, Users
 
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -76,3 +76,26 @@ async def require_user(
             url=f"/login?next={request.url.path}",
             status_code=status.HTTP_303_SEE_OTHER,
         )
+
+
+
+async def get_landlords(session: AsyncSession) -> list[dict]:
+    stmt = (
+        select(Landlords)
+        .where(Landlords.status != "deleted")
+        .order_by(Landlords.name)
+    )
+    landlords = (await session.execute(stmt)).scalars().all()
+
+    return [{"id": l.id, "name": l.name} for l in landlords]
+
+
+async def get_apartments(session: AsyncSession) -> list[dict]:
+    stmt = (
+        select(Apartments)
+        .where(Apartments.status != "deleted")
+        .order_by(Apartments.name)
+    )
+    apartments = (await session.execute(stmt)).scalars().all()
+
+    return [{"id": a.id, "name": a.name} for a in apartments]

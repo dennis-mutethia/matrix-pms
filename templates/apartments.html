@@ -103,7 +103,7 @@
                         <th class="text-center">No. of Houses</th>
                         <th class="text-center">No. of Tenants</th>
                         <th>Status</th>
-                        <th class="text-center">Actions</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,14 +124,18 @@
                                 class="badge status-badge bg-{{ 'success' if apartment.status=='active' else ('secondary' if apartment.status=='inactive' else 'danger') }}">{{
                                 apartment.status | capitalize }} </span>
                         </td>
-                        <td class="action-btns text-center">
+                        <td class="action-btns">
+                            {% if apartment.status != 'deleted' %}
+                            {% if apartment.houses > 0 %}
                             <a href="house-units?apartment_id={{ apartment.id }}" class="btn btn-sm btn-outline-info">
                                 <i class="bi bi-eye"></i> Houses
                             </a>
-                            <a href="edit-apartment?id={{ apartment.id }}" class="btn btn-sm btn-outline-primary">
+                            {% endif %}
+                            <a href="edit-apartment?id={{ apartment.id }}" class="btn btn-sm btn-outline-primary"
+                                title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            {% if apartment.status=='active' %}
+
                             <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
                                 data-bs-target="#deleteModal"
                                 onclick="setDeleteValues('{{ apartment.id }}', '{{ apartment.name }}')" title="Delete">

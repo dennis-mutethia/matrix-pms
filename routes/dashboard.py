@@ -6,7 +6,7 @@ from typing import Annotated
 from core.templating import templates
 
 from utils.database import get_session
-from utils.helper_auth import require_user
+from utils.helpers import require_user
 from utils.models import Users
 
 router = APIRouter()

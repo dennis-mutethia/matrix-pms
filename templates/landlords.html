@@ -104,10 +104,13 @@
                                 class="badge status-badge bg-{{ 'success' if landlord.status=='active' else ('secondary' if landlord.status=='inactive' else 'danger') }}">{{
                                 landlord.status | capitalize }} </span>
                         </td>
-                        <td class="action-btns text-center">
+                        <td class="action-btns">
+                            {% if landlord.status != 'deleted' %}
+                            {% if landlord.apartments > 0 %}
                             <a href="apartments?landlord_id={{ landlord.id }}" class="btn btn-sm btn-outline-info">
                                 <i class="bi bi-eye"></i> Apartments
                             </a>
+                            {% endif %}
                             <a href="edit-landlord?id={{ landlord.id }}" class="btn btn-sm btn-outline-primary"
                                 title="Edit">
                                 <i class="fas fa-edit"></i>
@@ -116,8 +119,6 @@
                                 title="Toggle Status">
                                 <i class="fas fa-power-off"></i>
                             </a>
-
-                            {% if landlord.status=='active' %}
                             <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
                                 data-bs-target="#deleteModal"
                                 onclick="setDeleteValues('{{ landlord.id }}', '{{ landlord.name }}')" title="Delete">

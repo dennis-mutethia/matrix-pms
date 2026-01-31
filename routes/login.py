@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.templating import templates
 from utils.database import get_session
 from utils.models import Users
-from utils.helper_auth import (
+from utils.helpers import (
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES,
     get_current_user,

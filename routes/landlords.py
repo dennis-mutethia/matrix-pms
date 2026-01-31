@@ -1,4 +1,4 @@
-import logging, re, uuid
+import logging, uuid
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple, Annotated
@@ -9,17 +9,14 @@ from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, func
 
-from core.templating import templates
+from core.templating import PHONE_REGEX, READ_ONLY_FIELDS, templates
 from utils.database import get_session
-from utils.helper_auth import require_user
+from utils.helpers import require_user
 from utils.models import Apartments, Landlords, Licenses, Packages, Users
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-READ_ONLY_FIELDS = {"id", "created_at", "created_by"}
-PHONE_REGEX = re.compile(r"^\+?254[17]\d{8}$|^0[17]\d{8}$")
 
 
 # ------------------------------------------------------------------
@@ -53,6 +50,9 @@ def validate_landlord_form(
 
     if not id_number.strip():
         errors["id_number"] = "ID Number is required"
+        
+    if not phone.strip():
+        errors["phone"] = "phone Number is required"
 
     if phone and not PHONE_REGEX.match(phone):
         errors["phone"] = "Invalid phone number format"
@@ -141,7 +141,7 @@ async def get_landlords_data(
     stmt = (
         select(
             Landlords,
-            func.count(Apartments.id).label("apartments"),
+            func.count(Apartments.id).label("apartments")
         )
         .join(
             Apartments,
@@ -244,7 +244,7 @@ async def render_edit_landlord(
     ).scalar_one_or_none()
 
     if not landlord:
-        errors = {"general": "Landlord not found"}
+        errors = "Landlord not found"
 
     return templates.TemplateResponse(
         "landlords-edit.html",
@@ -253,7 +253,7 @@ async def render_edit_landlord(
             "active": "landlords",
             "landlord": landlord,
             "success": success,
-            "errors": errors or {},
+            "errors": errors,
         },
     )
 
@@ -340,6 +340,8 @@ async def create_landlord(
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
+    
+    success = errors = ''
 
     errors = validate_landlord_form(name, email, phone, id_number, commission_rate)
     if errors:
@@ -347,11 +349,9 @@ async def create_landlord(
 
     now = datetime.utcnow()
 
+    data = normalize_landlord_data(locals())
     landlord = Landlords(
-        **normalize_landlord_data(
-            name, email, phone, id_number,
-            kra_pin, address, bank_name, bank_account, commission_rate
-        ),
+        **data,
         created_at=now,
         created_by=current_user.id,
     )
@@ -374,20 +374,19 @@ async def create_landlord(
     try:
         session.add_all([landlord, license])
         await session.commit()
-
-        return await render_new_landlord(
-            request,
-            success=f"Landlord `{landlord.name}` created successfully",
-        )
+        success = f"Landlord `{landlord.name}` created successfully"
 
     except Exception as exc:
         logger.error(exc)
         await session.rollback()
-        return await render_new_landlord(
-            request,
-            errors={"general": str(exc)},
-            form_data=locals(),
-        )
+        errors = str(exc)
+        
+    return await render_new_landlord(
+        request,
+        success=success,
+        errors=errors,
+        form_data=locals(),
+    )
 
 
 @router.get("/edit-landlord", response_class=HTMLResponse)
@@ -399,12 +398,15 @@ async def edit_landlord_form(
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
-
+    
     landlord_id, errors = parse_uuid(id, "Invalid landlord ID")
-    if errors:
-        return await render_landlords(request, session, errors=errors)
 
-    return await render_edit_landlord(request, session, landlord_id)
+    return await render_edit_landlord(
+        request, 
+        session,
+        landlord_id,
+        errors=errors
+    )
 
 
 @router.post("/edit-landlord", response_class=HTMLResponse)
@@ -442,4 +444,10 @@ async def edit_landlord(
     )
 
     landlord_id, _ = parse_uuid(id, "")
-    return await render_edit_landlord(request, session, landlord_id, success, errors)
+    return await render_edit_landlord(
+        request, 
+        session, 
+        landlord_id, 
+        success=success, 
+        errors=errors
+    )

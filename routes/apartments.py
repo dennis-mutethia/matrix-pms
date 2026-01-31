@@ -9,16 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import func, select
 from typing import Annotated
 
-from core.templating import templates
+from core.templating import READ_ONLY_FIELDS, templates
 from utils.database import get_session
-from utils.helper_auth import require_user
+from utils.helpers import get_landlords, require_user
 from utils.models import Apartments, House_Units, Landlords, Tenants, Users
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-READ_ONLY_FIELDS = {"id", "created_at", "created_by"}
 
 
 # ------------------------------------------------------------------
@@ -45,22 +43,6 @@ def normalize_apartment_data(
         "location": location.strip().upper(),
         "landlord_id": landlord_id,
     }
-
-
-async def get_landlords(session: AsyncSession) -> list[dict]:
-    stmt = (
-        select(Landlords)
-        .where(Landlords.status != "deleted")
-        .order_by(Landlords.name)
-    )
-
-    landlords = (await session.execute(stmt)).scalars().all()
-
-    return [
-        {
-            "id": l.id, 
-            "name": l.name
-        } for l in landlords]
 
 
 async def update_apartment(
@@ -131,7 +113,7 @@ async def render_apartments(
             Apartments,
             Landlords.name.label("landlord"),
             func.count(House_Units.id).label("houses"),
-            func.count(Tenants.id).label("tenants"),
+            func.count(Tenants.id).label("tenants")
         )
         .join(Landlords, Apartments.landlord_id == Landlords.id, isouter=True)
         .join(House_Units, House_Units.apartment_id == Apartments.id, isouter=True)

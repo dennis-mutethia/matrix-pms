@@ -193,7 +193,7 @@ class Tenants(SQLModel, table=True):
         index=True
     )
     email: str
-    house_unit_id: UUID = Field(
+    house_unit_id: Optional[UUID] = Field(
         foreign_key="house_units.id", 
         index=True
     )   
@@ -201,7 +201,7 @@ class Tenants(SQLModel, table=True):
     next_of_kin_phone: Optional[str]
     occupation: Optional[str]
     employer: Optional[str]
-    status: str = "active"
+    status: str = "unassigned"
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         nullable=False

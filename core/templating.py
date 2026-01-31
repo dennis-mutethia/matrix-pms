@@ -1,11 +1,15 @@
 
+import re
 from datetime import datetime
 from fastapi import Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from functools import wraps
 
-from utils.helper_auth import get_current_user
+from utils.helpers import get_current_user
+
+READ_ONLY_FIELDS = {"id", "created_at", "created_by"}
+PHONE_REGEX = re.compile(r"^\+?254[17]\d{8}$|^0[17]\d{8}$")
 
 templates = Jinja2Templates(directory="templates")
 
