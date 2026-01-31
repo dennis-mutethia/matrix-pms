@@ -13,6 +13,28 @@
         </a>
     </div> <br />
 
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body bg-white rounded">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label class="small fw-bold text-muted">Filter by Landlord</label>
+                    <select name="landlord_id" class="form-select">
+                        <option value="">-- All Landlords --</option>
+                        {% for landlord in landlords %}
+                        <option value="{{ landlord.id }}" {{ 'selected' if landlord_id==landlord.id else '' }}>{{
+                            landlord.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-5 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-info">Apply Filters</button>
+                    <a href="apartments" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Stats -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">

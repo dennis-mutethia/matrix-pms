@@ -21,8 +21,33 @@ READ_ONLY_FIELDS = {"id", "created_at", "created_by"}
 def normalize_apartment_data(data: Dict) -> Dict:
     return {
         "name": data["name"].strip().upper(),
-        "location": data["location"].strip().upper()
+        "location": data["location"].strip().upper(),
+        "landlord_id": data["landlord_id"].strip()
     }
+
+     
+async def get_landlords(    
+    session: AsyncSession,
+):
+    stmt = (
+        select(Landlords)
+        .where(
+            Landlords.status != "deleted"
+        )
+        .order_by(Landlords.name)
+    )
+
+    rows = (await session.execute(stmt)).scalars()
+
+    landlords = [
+        {
+            "id": landlord.id,
+            "name": landlord.name
+        }
+        for landlord in rows
+    ]
+    
+    return landlords
 
 
 async def update_apartment(
@@ -63,11 +88,17 @@ async def update_apartment(
         return None, str(exc), None
 
 
-
 async def get_apartments_data(    
     session: AsyncSession,
-    current_user: Users,
+    landlord_id: str
 ):
+    filters = [
+        Apartments.status != "deleted",
+        Landlords.status != "deleted"
+    ]
+    
+    if landlord_id:    
+        filters.append(Landlords.id == landlord_id)
     
     stmt = (
         select(
@@ -91,10 +122,7 @@ async def get_apartments_data(
             Tenants.house_unit_id == House_Units.id,
             isouter=True,
         )
-        .where(
-            Apartments.status != "deleted",
-            Landlords.status != "deleted"
-        )
+        .where(*filters)
         .group_by(Apartments.id)
         .group_by(Landlords.id)
         .order_by(Apartments.name)
@@ -125,7 +153,9 @@ async def get_apartments_data(
         "total_tenants": total_tenants,
     }
     
-    return apartments, stats
+    landlords = await get_landlords(session)
+    
+    return apartments, stats, landlords
 
 @router.get("/apartments", response_class=HTMLResponse)
 async def list_apartments(
@@ -133,14 +163,21 @@ async def list_apartments(
     current_user: Annotated[
         Users | RedirectResponse, Depends(get_current_user)
     ],
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
+    landlord_id: Annotated[str | None, Query()] = None,
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
+    
+    if landlord_id:    
+        try:
+            landlord_id = uuid.UUID(landlord_id)            
+        except ValueError:
+            errors = "Invalid landlord ID"
 
     success = errors = None
 
-    apartments, stats = await get_apartments_data(session, current_user)
+    apartments, stats, landlords = await get_apartments_data(session, landlord_id)
     
     return templates.TemplateResponse(
         "apartments.html",
@@ -149,6 +186,8 @@ async def list_apartments(
             "active": "apartments",
             "apartments": apartments,
             "stats": stats,
+            "landlords": landlords,
+            "landlord_id": landlord_id,
             "success": success,
             "errors": errors,
         },
@@ -162,10 +201,17 @@ async def delete_apartment(
         Users | RedirectResponse, Depends(get_current_user)
     ],
     session: AsyncSession = Depends(get_session),
+    landlord_id: Annotated[str | None, Query()] = None,
     delete_id: Optional[str] = Form(None),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
+    
+    if landlord_id:    
+        try:
+            landlord_id = uuid.UUID(landlord_id)            
+        except ValueError:
+            errors = "Invalid landlord ID"
 
     success = errors = None
     
@@ -178,7 +224,7 @@ async def delete_apartment(
             action='deleted'
         )
         
-    apartments, stats = await get_apartments_data(session, current_user)
+    apartments, stats, landlords = await get_apartments_data(session, landlord_id)
 
     return templates.TemplateResponse(
         "apartments.html",
@@ -187,6 +233,8 @@ async def delete_apartment(
             "active": "apartments",
             "apartments": apartments,
             "stats": stats,
+            "landlords": landlords,
+            "landlord_id": landlord_id,
             "success": success,
             "errors": errors,
         },
@@ -203,10 +251,13 @@ async def new_apartment_form(
     if isinstance(current_user, RedirectResponse):
         return current_user
     
+    landlords = await get_landlords(session)
+    
     return templates.TemplateResponse(
         "apartments-new.html",
         {
             "request": request, 
+            "landlords": landlords,
             "active": "new_apartment"
         },
     )
@@ -220,13 +271,16 @@ async def create_apartment(
     ],
     session: AsyncSession = Depends(get_session),
     name: str = Form(...),
-    location: str = Form(...)
+    location: str = Form(...),
+    landlord_id: str = Form(...)
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
     data = normalize_apartment_data(locals())
-    data["landlord_id"] = current_user.landlord_id
+    
+    landlords = await get_landlords(session)
+    
     now = datetime.utcnow()
 
     apartment = Apartments(
@@ -243,6 +297,7 @@ async def create_apartment(
             "apartments-new.html",
             {
                 "request": request,
+                "landlords": landlords,
                 "active": "new_apartment",
                 "success": f"Apartment {apartment.name} created successfully",
                 "errors": {},
@@ -256,6 +311,7 @@ async def create_apartment(
             "apartments-new.html",
             {
                 "request": request,
+                "landlords": landlords,
                 "active": "new_apartment",
                 "errors": {"general": str(exc)},
                 "form_data": locals(),
@@ -286,6 +342,8 @@ async def edit_apartment_form(
                 "errors": "Invalid apartment ID",
             },
         )
+    
+    landlords = await get_landlords(session)
 
     apartment = (
         await session.execute(select(Apartments).where(Apartments.id == apartment_id))
@@ -296,6 +354,7 @@ async def edit_apartment_form(
             "apartments-edit.html",
             {
                 "request": request,
+                "landlords": landlords,
                 "active": "apartments",
                 "errors": f"Apartment `{id}` not found",
             },
@@ -305,6 +364,7 @@ async def edit_apartment_form(
         "apartments-edit.html",
         {
             "request": request,
+            "landlords": landlords,
             "active": "apartments",
             "apartment": apartment,
         },
@@ -320,7 +380,8 @@ async def edit_apartment(
     session: AsyncSession = Depends(get_session),
     id: Annotated[str | None, Query()] = None,
     name: str = Form(...),
-    location: str = Form(...)
+    location: str = Form(...),
+    landlord_id: str = Form(...)
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
@@ -333,11 +394,14 @@ async def edit_apartment(
         id,
         data,
     )
+    
+    landlords = await get_landlords(session)
 
     return templates.TemplateResponse(
         "apartments-edit.html",
         {
             "request": request,
+            "landlords": landlords,
             "active": "apartments",
             "success": success,
             "errors": errors,

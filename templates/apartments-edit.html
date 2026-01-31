@@ -18,6 +18,19 @@
 
             <div class="card p-4">
                 <form method="POST">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase text-secondary">Assign to Landlord
+                        </label>
+                        <select name="landlord_id" class="form-select border-brand" required>
+                            {% for landlord in landlords %}
+                            <option value="{{ landlord.id }}" {{ 'selected' if apartment.landlord_id==landlord.id
+                                else '' }}>{{ landlord.name }}</option>
+                            <option value="{{ landlord.id }}">{{ landlord.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-uppercase text-secondary">Apartment Name</label>
                         <div class="input-group">

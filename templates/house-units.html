@@ -30,20 +30,34 @@
         <div class="card-body bg-white rounded">
             <form method="GET" class="row g-3">
                 <div class="col-md-4">
+                    <label class="small fw-bold text-muted">Filter by Landlord</label>
+                    <select name="landlord_id" class="form-select">
+                        <option value="">-- All Landlords --</option>
+                        {% for landlord in landlords %}
+                        <option value="{{ landlord.id }}" {{ 'selected' if landlord_id==landlord.id else '' }}>{{
+                            landlord.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4">
                     <label class="small fw-bold text-muted">Filter by Apartment</label>
                     <select name="apartment_id" class="form-select">
                         <option value="">-- All Apartments --</option>
                         {% for apartment in apartments %}
-                        <option value="{{ apartment.id }}" {{ 'selected' if apartment_id==apartment.id else ''}}>{{ apartment.name }}</option>
+                        <option value="{{ apartment.id }}" {{ 'selected' if apartment_id==apartment.id else '' }}>{{
+                            apartment.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+
                 <div class="col-md-3">
                     <label class="small fw-bold text-muted">Occupancy Status</label>
                     <select name="status" class="form-select">
                         <option value="">-- All Status --</option>
                         <option value="vacant" {{ 'selected' if status=='vacant' else '' }}>Vacant (No Tenant)</option>
-                        <option value="occupied" {{ 'selected' if status=='occupied' else '' }}>Occupied (Has Tenant)</option>
+                        <option value="occupied" {{ 'selected' if status=='occupied' else '' }}>Occupied (Has Tenant)
+                        </option>
                     </select>
                 </div>
                 <div class="col-md-5 d-flex align-items-end gap-2">
@@ -62,6 +76,7 @@
                         <th rowspan="2">#</th>
                         <th rowspan="2">House No.</th>
                         <th rowspan="2">Apartment</th>
+                        <th rowspan="2">Landlord</th>
                         <th rowspan="2">Occupancy Status</th>
                         <th rowspan="2" class="text-center">Monthly Rent</th>
 
@@ -84,6 +99,7 @@
                         <td>{{ loop.index }}.</td>
                         <td class="ps-3 fw-bold">{{ house_unit.name }}</td>
                         <td>{{ house_unit.apartment }}</td>
+                        <td>{{ house_unit.landlord }}</td>
                         <td>
                             {% if house_unit.tenant %}
                             <span class="badge badge-occupied"><i class="bi bi-person-fill"></i> {{ house_unit.tenant }}
@@ -98,26 +114,17 @@
                         <td class="text-center">{{ house_unit.water_deposit }}</td>
                         <td class="text-center">{{ house_unit.electricity_deposit }}</td>
                         <td class="text-center">{{ house_unit.other_deposits }}</td>
-
-                        <!-- <td class="text-center">
-                            <span class="badge rounded-pill bg-light text-dark border">{{ house_unit.houses }}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge rounded-pill bg-light text-dark border">{{ house_unit.tenants }}</span>
-                        </td> -->
                         <td class="text-center">
                             <div class="btn-group shadow-sm">
-                                <!-- <a href="houses.php?apartment_id={{ house_unit.id }}"
-                                    class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> Houses
-                                </a> -->
                                 <a href="edit-house-unit?id={{ house_unit.id }}" class="btn btn-sm btn-outline-warning">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a href="?delete_id={{ house_unit.id }}" class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm('Delete this house unit?')">
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal"
+                                    onclick="setDeleteValues('{{ house_unit.id }}', '{{ house_unit.name }}')"
+                                    title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
