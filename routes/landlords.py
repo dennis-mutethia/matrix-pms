@@ -1,5 +1,4 @@
-import re
-import uuid
+import logging, re, uuid
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple, Annotated
@@ -14,6 +13,8 @@ from core.templating import templates
 from utils.database import get_session
 from utils.helper_auth import require_user
 from utils.models import Apartments, Landlords, Licenses, Packages, Users
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -30,7 +31,8 @@ def parse_uuid(value: Optional[str], error_msg: str) -> Tuple[Optional[uuid.UUID
         return None, None
     try:
         return uuid.UUID(value), None
-    except ValueError:
+    except ValueError as exc:
+        logger.error(exc)
         return None, error_msg
 
 
@@ -123,6 +125,7 @@ async def update_landlord(
         return f"Landlord `{landlord.name}` {action} successfully", None, landlord
 
     except Exception as exc:
+        logger.error(exc)
         await session.rollback()
         return None, str(exc), None
 
@@ -378,6 +381,7 @@ async def create_landlord(
         )
 
     except Exception as exc:
+        logger.error(exc)
         await session.rollback()
         return await render_new_landlord(
             request,

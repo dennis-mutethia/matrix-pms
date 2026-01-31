@@ -30,53 +30,58 @@
         <div class="card-body bg-white rounded">
 
             <form method="GET" class="row g-3 align-items-end">
+
                 <div class="col-md-3">
                     <label class="small fw-bold text-muted">Filter by Landlord</label>
-                    <select name="landlord_id" class="form-select">
+                    <select name="landlord_id" class="form-select" onchange="this.form.submit()">
                         <option value="">-- All Landlords --</option>
                         {% for landlord in landlords %}
-                        <option value="{{ landlord.id }}" {{ 'selected' if landlord_id==landlord.id else '' }}>{{
-                            landlord.name }}</option>
+                        <option value="{{ landlord.id }}" {{ 'selected' if landlord_id==landlord.id else '' }}>
+                            {{ landlord.name }}
+                        </option>
                         {% endfor %}
                     </select>
                 </div>
 
                 <div class="col-md-3">
                     <label class="small fw-bold text-muted">Filter by Apartment</label>
-                    <select name="apartment_id" class="form-select">
-                        <option value="">-- All Apartments --</option>
+                    <select name="apartment_id" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- All Landlords --</option>
                         {% for apartment in apartments %}
-                        <option value="{{ apartment.id }}" {{ 'selected' if apartment_id==apartment.id else '' }}>{{
-                            apartment.name }}</option>
+                        <option value="{{ apartment.id }}" {{ 'selected' if landlord_id==apartment.id else '' }}>
+                            {{ apartment.name }}
+                        </option>
                         {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="small fw-bold text-muted">Occupancy Status</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- All Statuses --</option>
+                        <option value="vacant" {{ 'selected' if status=='vacant' else '' }}>Vacant</option>
+                        <option value="occupied" {{ 'selected' if status=='occupied' else '' }}>Occupied</option>
                     </select>
                 </div>
 
                 <div class="col-md-2">
-                    <label class="small fw-bold text-muted">Occupancy Status</label>
-                    <select name="status" class="form-select">
-                        <option value="">-- All Status --</option>
-                        <option value="vacant" {{ 'selected' if status=='vacant' else '' }}>Vacant (No Tenant)</option>
-                        <option value="occupied" {{ 'selected' if status=='occupied' else '' }}>Occupied (Has Tenant)
-                        </option>
-                    </select>
-                </div>
-
-                <div class="col-md-2 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-info">Apply Filters</button>
-                    <a href="house-units" class="btn btn-outline-secondary">Reset</a>
+                    <a href="house-units" class="btn btn-outline-secondary w-100">Reset</a>
                 </div>
 
                 <div class="col-md d-flex justify-content-end ms-auto">
                     <div class="form-check form-switch mt-2">
-                        <input class="form-check-input" type="checkbox" id="showDeleted" {% if
-                            request.query_params.get('show_deleted')=='true' %}checked{% endif %}
-                            onchange="toggleDeleted(this)">
+                        <!-- ensures false is sent when unchecked -->
+                        <input type="hidden" name="show_deleted" value="false">
+
+                        <input class="form-check-input" type="checkbox" id="showDeleted" name="show_deleted"
+                            value="true" {% if request.query_params.get('show_deleted')=='true' %}checked{% endif %}
+                            onchange="this.form.submit()">
                         <label class="small fw-bold text-muted form-check-label" for="showDeleted">
                             Show Deleted
                         </label>
                     </div>
                 </div>
+
             </form>
         </div>
     </div>
@@ -132,29 +137,27 @@
                         <td class="text-center">{{ house_unit.water_deposit }}</td>
                         <td class="text-center">{{ house_unit.electricity_deposit }}</td>
                         <td class="text-center">{{ house_unit.other_deposits }}</td>
-                        <td class="text-center">
-                            <div class="btn-group shadow-sm">
-                                <a href="edit-house-unit?id={{ house_unit.id }}" class="btn btn-sm btn-outline-warning">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
+                        <td class="action-btns text-center">
+                            <a href="edit-house-unit?id={{ house_unit.id }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
 
-                                {% if house_unit.status=='active' %}
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                                    data-bs-target="#deleteModal"
-                                    onclick="setDeleteValues('{{ house_unit.id }}', '{{ house_unit.name }}')"
-                                    title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                {% else %}
-                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
-                                    data-bs-target="#restoreModal"
-                                    onclick="setRestoreValues('{{ house_unit.id }}', '{{ house_unit.name }}')"
-                                    title="Restore">
-                                    <i class="fas fa-refresh"></i>
-                                </button>
-                                {% endif %}
+                            {% if house_unit.status=='active' %}
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteModal"
+                                onclick="setDeleteValues('{{ house_unit.id }}', '{{ house_unit.name }}')"
+                                title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
+                                data-bs-target="#restoreModal"
+                                onclick="setRestoreValues('{{ house_unit.id }}', '{{ house_unit.name }}')"
+                                title="Restore">
+                                <i class="fas fa-refresh"></i>
+                            </button>
+                            {% endif %}
 
-                            </div>
                         </td>
                     </tr>
                     {% endfor %}

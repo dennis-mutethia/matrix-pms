@@ -1,4 +1,4 @@
-import re
+import logging, re
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Form, Query, Request, Response, status
@@ -17,6 +17,8 @@ from utils.helper_auth import (
     require_user
 )
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 KENYAN_PHONE_REGEX = re.compile(r"^(?:\+254|0)[17]\d{8}$")
@@ -33,7 +35,8 @@ async def get_optional_user(
 ) -> Users | None:
     try:
         return await get_current_user(request, session)
-    except HTTPException:
+    except HTTPException as exc:
+        logger.error(exc)
         return None
 
 
@@ -129,7 +132,8 @@ async def post_login(
         )
         return redirect
 
-    except Exception as e:
+    except Exception as exc:
+        logger.error(exc)        
         return render_login(
             request,
             "An error occurred. Please try again.",
