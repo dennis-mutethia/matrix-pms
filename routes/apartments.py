@@ -1,16 +1,16 @@
-import re
 import uuid
 from datetime import datetime
-from typing import Annotated, Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
-from fastapi import APIRouter, Depends, Form, Request, Query
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select, func
+from sqlmodel import func, select
+from typing import Annotated
 
 from core.templating import templates
 from utils.database import get_session
-from utils.helper_auth import get_current_user
+from utils.helper_auth import require_user
 from utils.models import Apartments, House_Units, Landlords, Tenants, Users
 
 router = APIRouter()
@@ -18,36 +18,45 @@ router = APIRouter()
 READ_ONLY_FIELDS = {"id", "created_at", "created_by"}
 
 
-def normalize_apartment_data(data: Dict) -> Dict:
+# ------------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------------
+
+def parse_uuid(value: Optional[str], error_msg: str) -> Tuple[Optional[uuid.UUID], Optional[str]]:
+    if not value:
+        return None, None
+    try:
+        return uuid.UUID(value), None
+    except ValueError:
+        return None, error_msg
+
+
+def normalize_apartment_data(
+    name: str,
+    location: str,
+    landlord_id: str,
+) -> Dict:
     return {
-        "name": data["name"].strip().upper(),
-        "location": data["location"].strip().upper(),
-        "landlord_id": data["landlord_id"].strip()
+        "name": name.strip().upper(),
+        "location": location.strip().upper(),
+        "landlord_id": landlord_id,
     }
 
-     
-async def get_landlords(    
-    session: AsyncSession,
-):
+
+async def get_landlords(session: AsyncSession) -> list[dict]:
     stmt = (
         select(Landlords)
-        .where(
-            Landlords.status != "deleted"
-        )
+        .where(Landlords.status != "deleted")
         .order_by(Landlords.name)
     )
 
-    rows = (await session.execute(stmt)).scalars()
+    landlords = (await session.execute(stmt)).scalars().all()
 
-    landlords = [
+    return [
         {
-            "id": landlord.id,
-            "name": landlord.name
-        }
-        for landlord in rows
-    ]
-    
-    return landlords
+            "id": l.id, 
+            "name": l.name
+        } for l in landlords]
 
 
 async def update_apartment(
@@ -55,22 +64,23 @@ async def update_apartment(
     current_user: Users,
     apartment_id: str,
     updates: Dict,
-    action: Optional[str] = 'updated'
+    action: str = "updated",
 ) -> Tuple[Optional[str], Optional[str], Optional[Apartments]]:
-    try:
-        apartment_uuid = uuid.UUID(apartment_id)
-    except ValueError:
-        return None, "Invalid apartment ID", None
 
-    try:
-        result = await session.execute(
+    apartment_uuid, error = parse_uuid(apartment_id, "Invalid apartment ID")
+    if error:
+        return None, error, None
+
+    apartment = (
+        await session.execute(
             select(Apartments).where(Apartments.id == apartment_uuid)
         )
-        apartment = result.scalar_one_or_none()
+    ).scalar_one_or_none()
 
-        if not apartment:
-            return None, f"Apartment `{apartment_id}` not found", None
+    if not apartment:
+        return None, f"Apartment `{apartment_id}` not found", None
 
+    try:
         for field, value in updates.items():
             if field not in READ_ONLY_FIELDS:
                 setattr(apartment, field, value)
@@ -88,97 +98,60 @@ async def update_apartment(
         return None, str(exc), None
 
 
-async def get_apartments_data(    
+# ------------------------------------------------------------------
+# Renderers
+# ------------------------------------------------------------------
+
+async def render_apartments(
+    request: Request,
     session: AsyncSession,
-    landlord_id: str
+    landlord_id: Optional[uuid.UUID] = None,
+    success: Optional[str] = None,
+    errors: Optional[str] = None,
 ):
     filters = [
         Apartments.status != "deleted",
-        Landlords.status != "deleted"
+        Landlords.status != "deleted",
     ]
-    
-    if landlord_id:    
+
+    if landlord_id:
         filters.append(Landlords.id == landlord_id)
-    
+
     stmt = (
         select(
-            Apartments,#
+            Apartments,
             Landlords.name.label("landlord"),
-            func.count(House_Units.id).label("houses_count"),
-            func.count(Tenants.id).label("tenants_count"),
+            func.count(House_Units.id).label("houses"),
+            func.count(Tenants.id).label("tenants"),
         )
-        .join(
-            Landlords,
-            Apartments.landlord_id == Landlords.id,
-            isouter=True,
-        )
-        .join(
-            House_Units,
-            House_Units.apartment_id == Apartments.id,
-            isouter=True,
-        )
-        .join(
-            Tenants,
-            Tenants.house_unit_id == House_Units.id,
-            isouter=True,
-        )
+        .join(Landlords, Apartments.landlord_id == Landlords.id, isouter=True)
+        .join(House_Units, House_Units.apartment_id == Apartments.id, isouter=True)
+        .join(Tenants, Tenants.house_unit_id == House_Units.id, isouter=True)
         .where(*filters)
-        .group_by(Apartments.id)
-        .group_by(Landlords.id)
+        .group_by(Apartments.id, Landlords.id)
         .order_by(Apartments.name)
     )
-
 
     rows = (await session.execute(stmt)).all()
 
     apartments = [
         {
-            "id": apartment.id,
-            "name": apartment.name,
-            "location": apartment.location,
+            "id": a.id,
+            "name": a.name,
+            "location": a.location,
             "landlord": landlord,
-            "houses": houses_count or 0,
-            "tenants": tenants_count or 0,
+            "houses": houses or 0,
+            "tenants": tenants or 0,
         }
-        for apartment, landlord, houses_count, tenants_count in rows
+        for a, landlord, houses, tenants in rows
     ]
-
-    # Count stats properly
-    total_house_units = sum(a["houses"] for a in apartments)
-    total_tenants = sum(a["tenants"] for a in apartments)
 
     stats = {
         "total_apartments": len(apartments),
-        "total_house_units": total_house_units,
-        "total_tenants": total_tenants,
+        "total_house_units": sum(a["houses"] for a in apartments),
+        "total_tenants": sum(a["tenants"] for a in apartments),
     }
-    
-    landlords = await get_landlords(session)
-    
-    return apartments, stats, landlords
 
-@router.get("/apartments", response_class=HTMLResponse)
-async def list_apartments(
-    request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
-    session: AsyncSession = Depends(get_session),
-    landlord_id: Annotated[str | None, Query()] = None,
-):
-    if isinstance(current_user, RedirectResponse):
-        return current_user
-    
-    if landlord_id:    
-        try:
-            landlord_id = uuid.UUID(landlord_id)            
-        except ValueError:
-            errors = "Invalid landlord ID"
-
-    success = errors = None
-
-    apartments, stats, landlords = await get_apartments_data(session, landlord_id)
-    
     return templates.TemplateResponse(
         "apartments.html",
         {
@@ -186,225 +159,185 @@ async def list_apartments(
             "active": "apartments",
             "apartments": apartments,
             "stats": stats,
-            "landlords": landlords,
+            "landlords": await get_landlords(session),
             "landlord_id": landlord_id,
             "success": success,
             "errors": errors,
         },
     )
+
+
+async def render_new_apartment(
+    request: Request,
+    session: AsyncSession,
+    success: Optional[str] = None,
+    errors: Optional[str] = None,
+):
+    return templates.TemplateResponse(
+        "apartments-new.html",
+        {
+            "request": request,
+            "active": "new_apartment",
+            "landlords": await get_landlords(session),
+            "success": success,
+            "errors": errors,
+        },
+    )
+
+
+async def render_edit_apartment(
+    request: Request,
+    session: AsyncSession,
+    apartment_id: uuid.UUID,
+    success: Optional[str] = None,
+    errors: Optional[str] = None,
+):
+    apartment = (
+        await session.execute(
+            select(Apartments).where(Apartments.id == apartment_id)
+        )
+    ).scalar_one_or_none()
+
+    if not apartment:
+        errors = "Apartment not found"
+
+    return templates.TemplateResponse(
+        "apartments-edit.html",
+        {
+            "request": request,
+            "active": "apartments",
+            "landlords": await get_landlords(session),
+            "apartment": apartment,
+            "success": success,
+            "errors": errors,
+        },
+    )
+
+
+# ------------------------------------------------------------------
+# Routes
+# ------------------------------------------------------------------
+
+@router.get("/apartments", response_class=HTMLResponse)
+async def list_apartments(
+    request: Request,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],    
+    session: AsyncSession = Depends(get_session),
+    landlord_id: Optional[str] = Query(None),
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    landlord_uuid, errors = parse_uuid(landlord_id, "Invalid landlord ID")
+
+    return await render_apartments(request, session, landlord_uuid, errors=errors)
 
 
 @router.post("/apartments", response_class=HTMLResponse)
 async def delete_apartment(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    landlord_id: Annotated[str | None, Query()] = None,
+    landlord_id: Optional[str] = Query(None),
     delete_id: Optional[str] = Form(None),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
-    
-    if landlord_id:    
-        try:
-            landlord_id = uuid.UUID(landlord_id)            
-        except ValueError:
-            errors = "Invalid landlord ID"
 
-    success = errors = None
-    
+    landlord_uuid, errors = parse_uuid(landlord_id, "Invalid landlord ID")
+
+    success = None
     if delete_id:
         success, errors, _ = await update_apartment(
-            session, 
-            current_user, 
-            delete_id, 
+            session,
+            current_user,
+            delete_id,
             {"status": "deleted"},
-            action='deleted'
+            action="deleted",
         )
-        
-    apartments, stats, landlords = await get_apartments_data(session, landlord_id)
 
-    return templates.TemplateResponse(
-        "apartments.html",
-        {
-            "request": request,
-            "active": "apartments",
-            "apartments": apartments,
-            "stats": stats,
-            "landlords": landlords,
-            "landlord_id": landlord_id,
-            "success": success,
-            "errors": errors,
-        },
-    )
-    
+    return await render_apartments(request, session, landlord_uuid, success, errors)
+
+
 @router.get("/new-apartment", response_class=HTMLResponse)
 async def new_apartment_form(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
-    
-    landlords = await get_landlords(session)
-    
-    return templates.TemplateResponse(
-        "apartments-new.html",
-        {
-            "request": request, 
-            "landlords": landlords,
-            "active": "new_apartment"
-        },
-    )
+
+    return await render_new_apartment(request, session)
 
 
 @router.post("/new-apartment", response_class=HTMLResponse)
 async def create_apartment(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     name: str = Form(...),
     location: str = Form(...),
-    landlord_id: str = Form(...)
+    landlord_id: str = Form(...),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
-    data = normalize_apartment_data(locals())
-    
-    landlords = await get_landlords(session)
-    
-    now = datetime.utcnow()
-
     apartment = Apartments(
-        **data,
-        created_at=now,
+        **normalize_apartment_data(name, location, landlord_id),
+        created_at=datetime.utcnow(),
         created_by=current_user.id,
     )
 
     try:
         session.add(apartment)
         await session.commit()
-
-        return templates.TemplateResponse(
-            "apartments-new.html",
-            {
-                "request": request,
-                "landlords": landlords,
-                "active": "new_apartment",
-                "success": f"Apartment {apartment.name} created successfully",
-                "errors": {},
-                "form_data": {},
-            },
+        return await render_new_apartment(
+            request,
+            session,
+            success=f"Apartment `{apartment.name}` created successfully",
         )
-
     except Exception as exc:
         await session.rollback()
-        return templates.TemplateResponse(
-            "apartments-new.html",
-            {
-                "request": request,
-                "landlords": landlords,
-                "active": "new_apartment",
-                "errors": {"general": str(exc)},
-                "form_data": locals(),
-            },
-        )
+        return await render_new_apartment(request, session, errors=str(exc))
 
 
 @router.get("/edit-apartment", response_class=HTMLResponse)
 async def edit_apartment_form(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    id: Annotated[str | None, Query()] = None,
+    id: Optional[str] = Query(None),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
-    try:
-        apartment_id = uuid.UUID(id)
-    except Exception:
-        return templates.TemplateResponse(
-            "apartments-edit.html",
-            {
-                "request": request,
-                "active": "apartments",
-                "errors": "Invalid apartment ID",
-            },
-        )
-    
-    landlords = await get_landlords(session)
+    apartment_id, errors = parse_uuid(id, "Invalid apartment ID")
+    if errors:
+        return await render_apartments(request, session, errors=errors)
 
-    apartment = (
-        await session.execute(select(Apartments).where(Apartments.id == apartment_id))
-    ).scalar_one_or_none()
-
-    if not apartment:
-        return templates.TemplateResponse(
-            "apartments-edit.html",
-            {
-                "request": request,
-                "landlords": landlords,
-                "active": "apartments",
-                "errors": f"Apartment `{id}` not found",
-            },
-        )
-
-    return templates.TemplateResponse(
-        "apartments-edit.html",
-        {
-            "request": request,
-            "landlords": landlords,
-            "active": "apartments",
-            "apartment": apartment,
-        },
-    )
+    return await render_edit_apartment(request, session, apartment_id)
 
 
 @router.post("/edit-apartment", response_class=HTMLResponse)
 async def edit_apartment(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    id: Annotated[str | None, Query()] = None,
+    id: str = Query(...),
     name: str = Form(...),
     location: str = Form(...),
-    landlord_id: str = Form(...)
+    landlord_id: str = Form(...),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
-    data = normalize_apartment_data(locals())
-
-    success, errors, apartment = await update_apartment(
+    success, errors, _ = await update_apartment(
         session,
         current_user,
         id,
-        data,
+        normalize_apartment_data(name, location, landlord_id),
     )
-    
-    landlords = await get_landlords(session)
 
-    return templates.TemplateResponse(
-        "apartments-edit.html",
-        {
-            "request": request,
-            "landlords": landlords,
-            "active": "apartments",
-            "success": success,
-            "errors": errors,
-            "apartment": apartment,
-        },
-    )
+    apartment_id, _ = parse_uuid(id, "")
+    return await render_edit_apartment(request, session, apartment_id, success, errors)

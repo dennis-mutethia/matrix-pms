@@ -6,7 +6,7 @@ from typing import Optional
 
 from fastapi.responses import RedirectResponse
 import jwt
-from fastapi import Request, Depends, status
+from fastapi import HTTPException, Request, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -40,36 +40,39 @@ async def authenticate_user(phone: str, password: str, session: AsyncSession) ->
 
 async def get_current_user(
     request: Request,
-    session: AsyncSession = Depends(get_session)
+    session: AsyncSession = Depends(get_session),
 ) -> Users:
-    """
-    Dependency: returns current user or redirects to login
-    """
     token = request.cookies.get("access_token")
 
     if not token:
-        return RedirectResponse(
-            url="/login?next=" + str(request.url),
-            status_code=status.HTTP_303_SEE_OTHER
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = str(payload.get("sub") or 0)
-    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, ValueError):
-        return RedirectResponse(
-            url="/login?next=" + str(request.url),
-            status_code=status.HTTP_303_SEE_OTHER
-        )
+        user_id = payload.get("sub")
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    stmt = select(Users).where(Users.id == user_id)
-    result = await session.execute(stmt)
-    user = result.scalar_one_or_none()
-
-    if user is None:
-        return RedirectResponse(
-            url="/login?next=" + str(request.url),
-            status_code=status.HTTP_303_SEE_OTHER
+    user = (
+        await session.execute(
+            select(Users).where(Users.id == user_id)
         )
+    ).scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     return user
+
+
+async def require_user(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+) -> Users:
+    try:
+        return await get_current_user(request, session)
+    except HTTPException:
+        return RedirectResponse(
+            url=f"/login?next={request.url.path}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )

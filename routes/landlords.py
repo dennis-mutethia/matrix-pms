@@ -12,7 +12,7 @@ from sqlmodel import select, func
 
 from core.templating import templates
 from utils.database import get_session
-from utils.helper_auth import get_current_user
+from utils.helper_auth import require_user
 from utils.models import Apartments, Landlords, Licenses, Packages, Users
 
 router = APIRouter()
@@ -164,9 +164,7 @@ async def get_landlords_data(
 @router.get("/landlords", response_class=HTMLResponse)
 async def list_landlords(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     toggle_status_id: Annotated[str | None, Query()] = None,
 ):
@@ -198,9 +196,7 @@ async def list_landlords(
 @router.post("/landlords", response_class=HTMLResponse)
 async def delete_landlord(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     delete_id: Optional[str] = Form(None),
 ):
@@ -238,9 +234,7 @@ async def delete_landlord(
 @router.get("/new-landlord", response_class=HTMLResponse)
 async def new_landlord_form(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
@@ -254,9 +248,7 @@ async def new_landlord_form(
 @router.post("/new-landlord", response_class=HTMLResponse)
 async def create_landlord(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     name: str = Form(...),
     email: str = Form(...),
@@ -339,9 +331,7 @@ async def create_landlord(
 @router.get("/edit-landlord", response_class=HTMLResponse)
 async def edit_landlord_form(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     id: Annotated[str | None, Query()] = None,
 ):
@@ -387,9 +377,7 @@ async def edit_landlord_form(
 @router.post("/edit-landlord", response_class=HTMLResponse)
 async def edit_landlord(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     id: Annotated[str | None, Query()] = None,
     name: str = Form(...),

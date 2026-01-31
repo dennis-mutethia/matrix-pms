@@ -1,6 +1,7 @@
 import re
+from typing import Annotated
 
-from fastapi import APIRouter, Request, Form, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, Form, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +12,9 @@ from utils.models import Users
 from utils.helper_auth import (
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES,
+    get_current_user,
     hash_password,
+    require_user
 )
 
 router = APIRouter()
@@ -22,6 +25,16 @@ KENYAN_PHONE_REGEX = re.compile(r"^(?:\+254|0)[17]\d{8}$")
 def normalize_phone(phone: str) -> str:
     """Convert phone to 2547XXXXXXXX format."""
     return "254" + phone[-9:]
+
+
+async def get_optional_user(
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+) -> Users | None:
+    try:
+        return await get_current_user(request, session)
+    except HTTPException:
+        return None
 
 
 def validate_login_form(phone: str, password: str) -> dict:
@@ -55,8 +68,17 @@ def render_login(request: Request, errors: str = None):
 async def get_login(
     request: Request,
     session: AsyncSession = Depends(get_session),
+    current_user: Users | None = Depends(get_optional_user),
+    next: str | None = "/dashboard"  # optional query param
 ):
+    if current_user is not None:
+        return RedirectResponse(
+            url=next,
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+        
     return render_login(request)
+
 
 @router.post("/login", response_class=HTMLResponse)
 async def post_login(
@@ -64,6 +86,7 @@ async def post_login(
     phone: str = Form(...),
     password: str = Form(...),
     session: AsyncSession = Depends(get_session),
+    next: Annotated[str | None, Query()] = "/dashboard",
 ):
     errors = validate_login_form(phone, password)
     if errors:
@@ -92,15 +115,8 @@ async def post_login(
             data={"sub": str(user.id)}
         )
 
-        # 🔑 THIS is the missing piece
-        next_url = request.query_params.get("next", "/dashboard")
-
-        # 🛡️ prevent open redirects
-        # if not next_url.startswith("/"):
-        #     next_url = "/dashboard"
-
         redirect = RedirectResponse(
-            url=next_url,
+            url=next,
             status_code=status.HTTP_303_SEE_OTHER,
         )
         redirect.set_cookie(
@@ -113,8 +129,23 @@ async def post_login(
         )
         return redirect
 
-    except Exception:
+    except Exception as e:
         return render_login(
             request,
             "An error occurred. Please try again.",
         )
+
+
+@router.get("/logout")
+async def logout(
+    response: Response,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)]
+):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=False,          
+        samesite="lax",
+    )
+
+    return RedirectResponse(url="/login", status_code=303)

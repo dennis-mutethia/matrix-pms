@@ -6,7 +6,7 @@ from typing import Annotated
 from core.templating import templates
 
 from utils.database import get_session
-from utils.helper_auth import get_current_user
+from utils.helper_auth import require_user
 from utils.models import Users
 
 router = APIRouter()
@@ -14,7 +14,7 @@ router = APIRouter()
 @router.get("/dashboard", response_class=HTMLResponse)
 async def get_dashboard(
     request: Request,
-    current_user: Annotated[Users | RedirectResponse, Depends(get_current_user)],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session)  # still available if needed
 ):
     if isinstance(current_user, RedirectResponse):

@@ -10,7 +10,7 @@ from sqlmodel import select
 
 from core.templating import templates
 from utils.database import get_session
-from utils.helper_auth import get_current_user
+from utils.helper_auth import require_user
 from utils.models import Apartments, House_Units, Landlords, Tenants, Users
 
 router = APIRouter()
@@ -180,9 +180,7 @@ async def get_house_units_data(
 @router.get("/house-units", response_class=HTMLResponse)
 async def list_house_units(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     landlord_id: Annotated[str | None, Query()] = None,
     apartment_id: Annotated[str | None, Query()] = None,
@@ -227,9 +225,7 @@ async def list_house_units(
 @router.post("/house-units", response_class=HTMLResponse)
 async def delete_house_units(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     landlord_id: Annotated[str | None, Query()] = None,
     apartment_id: Annotated[str | None, Query()] = None,
@@ -284,9 +280,7 @@ async def delete_house_units(
 @router.get("/new-house-unit", response_class=HTMLResponse)
 async def new_house_unit_form(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
 ):
     if isinstance(current_user, RedirectResponse):
@@ -307,9 +301,7 @@ async def new_house_unit_form(
 @router.post("/new-house-unit", response_class=HTMLResponse)
 async def create_house_unit(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),            
     name: str = Form(...),
     apartment_id: str = Form(...),
@@ -367,9 +359,7 @@ async def create_house_unit(
 @router.get("/edit-house-unit", response_class=HTMLResponse)
 async def edit_house_unit_form(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     id: Annotated[str | None, Query()] = None,
 ):
@@ -420,9 +410,7 @@ async def edit_house_unit_form(
 @router.post("/edit-house-unit", response_class=HTMLResponse)
 async def edit_house_unit(
     request: Request,
-    current_user: Annotated[
-        Users | RedirectResponse, Depends(get_current_user)
-    ],
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     id: Annotated[str | None, Query()] = None,         
     name: str = Form(...),
