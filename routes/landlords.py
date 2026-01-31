@@ -2,9 +2,9 @@ import re
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta
-from typing import Annotated, Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Annotated
 
-from fastapi import APIRouter, Depends, Form, Request, Query
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,16 +17,23 @@ from utils.models import Apartments, Landlords, Licenses, Packages, Users
 
 router = APIRouter()
 
-# ─────────────────────────────────────────────
-# Constants
-# ─────────────────────────────────────────────
-PHONE_REGEX = re.compile(r"^\+?254[17]\d{8}$|^0[17]\d{8}$")
 READ_ONLY_FIELDS = {"id", "created_at", "created_by"}
+PHONE_REGEX = re.compile(r"^\+?254[17]\d{8}$|^0[17]\d{8}$")
 
 
-# ─────────────────────────────────────────────
+# ------------------------------------------------------------------
 # Helpers
-# ─────────────────────────────────────────────
+# ------------------------------------------------------------------
+
+def parse_uuid(value: Optional[str], error_msg: str) -> Tuple[Optional[uuid.UUID], Optional[str]]:
+    if not value:
+        return None, None
+    try:
+        return uuid.UUID(value), None
+    except ValueError:
+        return None, error_msg
+
+
 def validate_landlord_form(
     name: str,
     email: str,
@@ -40,7 +47,7 @@ def validate_landlord_form(
         errors["name"] = "Name is required"
 
     if "@" not in email or "." not in email.split("@")[-1]:
-        errors["email"] = "Please enter a valid email address"
+        errors["email"] = "Invalid email address"
 
     if not id_number.strip():
         errors["id_number"] = "ID Number is required"
@@ -54,17 +61,27 @@ def validate_landlord_form(
     return errors
 
 
-def normalize_landlord_data(data: Dict) -> Dict:
+def normalize_landlord_data(
+    name: str,
+    email: str,
+    phone: str,
+    id_number: str,
+    kra_pin: Optional[str],
+    address: Optional[str],
+    bank_name: Optional[str],
+    bank_account: Optional[str],
+    commission_rate: Optional[float],
+) -> Dict:
     return {
-        "name": data["name"].strip().upper(),
-        "email": data["email"].strip().lower(),
-        "phone": "254" + data["phone"].strip()[-9:],
-        "id_number": data["id_number"].strip(),
-        "kra_pin": (data.get("kra_pin") or "").strip().upper() or None,
-        "address": (data.get("address") or "").strip().upper() or None,
-        "bank_name": (data.get("bank_name") or "").strip().upper() or None,
-        "bank_account": (data.get("bank_account") or "").strip().upper() or None,
-        "commission_rate": data.get("commission_rate"),
+        "name": name.strip().upper(),
+        "email": email.strip().lower(),
+        "phone": "254" + phone.strip()[-9:],
+        "id_number": id_number.strip(),
+        "kra_pin": kra_pin.strip().upper() if kra_pin else None,
+        "address": address.strip().upper() if address else None,
+        "bank_name": bank_name.strip().upper() if bank_name else None,
+        "bank_account": bank_account.strip().upper() if bank_account else None,
+        "commission_rate": commission_rate,
     }
 
 
@@ -73,22 +90,23 @@ async def update_landlord(
     current_user: Users,
     landlord_id: str,
     updates: Dict,
-    action: Optional[str] = 'updated'
+    action: str = "updated",
 ) -> Tuple[Optional[str], Optional[str], Optional[Landlords]]:
-    try:
-        landlord_uuid = uuid.UUID(landlord_id)
-    except ValueError:
-        return None, "Invalid landlord ID", None
 
-    try:
-        result = await session.execute(
+    landlord_uuid, error = parse_uuid(landlord_id, "Invalid landlord ID")
+    if error:
+        return None, error, None
+
+    landlord = (
+        await session.execute(
             select(Landlords).where(Landlords.id == landlord_uuid)
         )
-        landlord = result.scalar_one_or_none()
+    ).scalar_one_or_none()
 
-        if not landlord:
-            return None, f"Landlord `{landlord_id}` not found", None
+    if not landlord:
+        return None, f"Landlord `{landlord_id}` not found", None
 
+    try:
         if updates.pop("toggle_status", False):
             landlord.status = "inactive" if landlord.status == "active" else "active"
         else:
@@ -109,13 +127,18 @@ async def update_landlord(
         return None, str(exc), None
 
 
-async def get_landlords_data(    
-    session: AsyncSession
+async def get_landlords_data(
+    session: AsyncSession,
+    show_deleted: bool = False,
 ):
+    filters = []
+    if not show_deleted:
+        filters.append(Landlords.status != "deleted")
+
     stmt = (
         select(
             Landlords,
-            func.count(Apartments.id).label("apartments_count"),
+            func.count(Apartments.id).label("apartments"),
         )
         .join(
             Apartments,
@@ -125,7 +148,7 @@ async def get_landlords_data(
             ),
             isouter=True,
         )
-        .where(Landlords.status != "deleted")
+        .where(*filters)
         .group_by(Landlords.id)
         .order_by(Landlords.name)
     )
@@ -134,15 +157,15 @@ async def get_landlords_data(
 
     landlords = [
         {
-            "id": landlord.id,
-            "name": landlord.name,
-            "email": landlord.email,
-            "phone": landlord.phone,
-            "id_number": landlord.id_number,
-            "status": landlord.status,
+            "id": l.id,
+            "name": l.name,
+            "email": l.email,
+            "phone": l.phone,
+            "id_number": l.id_number,
+            "status": l.status,
             "apartments": count or 0,
         }
-        for landlord, count in rows
+        for l, count in rows
     ]
 
     status_counts = Counter(l["status"] for l in landlords)
@@ -155,18 +178,94 @@ async def get_landlords_data(
         "with_properties": apt_counts["with"],
         "without_properties": apt_counts["without"],
     }
-    
+
     return landlords, stats
 
-# ─────────────────────────────────────────────
-# List Landlords
-# ─────────────────────────────────────────────
+
+# ------------------------------------------------------------------
+# Renderers
+# ------------------------------------------------------------------
+
+async def render_landlords(
+    request: Request,
+    session: AsyncSession,
+    show_deleted: bool = False,
+    success: Optional[str] = None,
+    errors: Optional[str] = None,
+):
+    landlords, stats = await get_landlords_data(session, show_deleted)
+
+    return templates.TemplateResponse(
+        "landlords.html",
+        {
+            "request": request,
+            "active": "landlords",
+            "landlords": landlords,
+            "stats": stats,
+            "success": success,
+            "errors": errors,
+            "show_deleted": show_deleted,
+        },
+    )
+
+
+async def render_new_landlord(
+    request: Request,
+    success: Optional[str] = None,
+    errors: Optional[Dict] = None,
+    form_data: Optional[Dict] = None,
+):
+    return templates.TemplateResponse(
+        "landlords-new.html",
+        {
+            "request": request,
+            "active": "new_landlord",
+            "success": success,
+            "errors": errors or {},
+            "form_data": form_data or {},
+        },
+    )
+
+
+async def render_edit_landlord(
+    request: Request,
+    session: AsyncSession,
+    landlord_id: uuid.UUID,
+    success: Optional[str] = None,
+    errors: Optional[Dict] = None,
+):
+    landlord = (
+        await session.execute(
+            select(Landlords).where(Landlords.id == landlord_id)
+        )
+    ).scalar_one_or_none()
+
+    if not landlord:
+        errors = {"general": "Landlord not found"}
+
+    return templates.TemplateResponse(
+        "landlords-edit.html",
+        {
+            "request": request,
+            "active": "landlords",
+            "landlord": landlord,
+            "success": success,
+            "errors": errors or {},
+        },
+    )
+
+
+# ------------------------------------------------------------------
+# Routes
+# ------------------------------------------------------------------
+
 @router.get("/landlords", response_class=HTMLResponse)
-async def list_landlords(
+async def fetch(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    toggle_status_id: Annotated[str | None, Query()] = None,
+    show_deleted: bool = Query(False),
+    toggle_status_id: Optional[str] = Query(None),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
@@ -175,62 +274,41 @@ async def list_landlords(
 
     if toggle_status_id:
         success, errors, _ = await update_landlord(
-            session, current_user, toggle_status_id, {"toggle_status": True}
+            session,
+            current_user,
+            toggle_status_id,
+            {"toggle_status": True},
         )
 
-    landlords, stats = await get_landlords_data(session)
-
-    return templates.TemplateResponse(
-        "landlords.html",
-        {
-            "request": request,
-            "active": "landlords",
-            "landlords": landlords,
-            "stats": stats,
-            "success": success,
-            "errors": errors,
-        },
-    )
+    return await render_landlords(request, session, show_deleted, success, errors)
 
 
 @router.post("/landlords", response_class=HTMLResponse)
-async def delete_landlord(
+async def post(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
     delete_id: Optional[str] = Form(None),
+    restore_id: Optional[str] = Form(None),
+    show_deleted: bool = Query(False),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
     success = errors = None
-    
-    if delete_id:
+
+    if delete_id or restore_id:
         success, errors, _ = await update_landlord(
-            session, 
-            current_user, 
-            delete_id, 
-            {"status": "deleted"},
-            action='deleted'
+            session,
+            current_user,
+            delete_id if delete_id else restore_id,
+            {"status": "deleted" if delete_id else "active"},
+            "deleted" if delete_id else "restored",
         )
-        
-    landlords, stats = await get_landlords_data(session)
 
-    return templates.TemplateResponse(
-        "landlords.html",
-        {
-            "request": request,
-            "active": "landlords",
-            "landlords": landlords,
-            "stats": stats,
-            "success": success,
-            "errors": errors,
-        },
-    )
+    return await render_landlords(request, session, show_deleted, success, errors)
 
-# ─────────────────────────────────────────────
-# New Landlord
-# ─────────────────────────────────────────────
+
 @router.get("/new-landlord", response_class=HTMLResponse)
 async def new_landlord_form(
     request: Request,
@@ -239,10 +317,7 @@ async def new_landlord_form(
     if isinstance(current_user, RedirectResponse):
         return current_user
 
-    return templates.TemplateResponse(
-        "landlords-new.html",
-        {"request": request, "active": "new_landlord"},
-    )
+    return await render_new_landlord(request)
 
 
 @router.post("/new-landlord", response_class=HTMLResponse)
@@ -265,34 +340,30 @@ async def create_landlord(
 
     errors = validate_landlord_form(name, email, phone, id_number, commission_rate)
     if errors:
-        return templates.TemplateResponse(
-            "landlords-new.html",
-            {
-                "request": request,
-                "active": "new_landlord",
-                "errors": errors,
-                "form_data": locals(),
-            },
-        )
+        return await render_new_landlord(request, errors=errors, form_data=locals())
 
-    data = normalize_landlord_data(locals())
     now = datetime.utcnow()
 
     landlord = Landlords(
-        **data,
+        **normalize_landlord_data(
+            name, email, phone, id_number,
+            kra_pin, address, bank_name, bank_account, commission_rate
+        ),
         created_at=now,
         created_by=current_user.id,
     )
 
-    trial_package = (
-        await session.execute(select(Packages).where(Packages.name == "TRIAL"))
+    trial = (
+        await session.execute(
+            select(Packages).where(Packages.name == "TRIAL")
+        )
     ).scalar_one()
 
     license = Licenses(
         key=str(uuid.uuid4()).upper(),
-        package_id=trial_package.id,
+        package_id=trial.id,
         landlord_id=landlord.id,
-        expires_at=now + timedelta(days=trial_package.validity),
+        expires_at=now + timedelta(days=trial.validity),
         created_at=now,
         created_by=current_user.id,
     )
@@ -301,77 +372,35 @@ async def create_landlord(
         session.add_all([landlord, license])
         await session.commit()
 
-        return templates.TemplateResponse(
-            "landlords-new.html",
-            {
-                "request": request,
-                "active": "new_landlord",
-                "success": f"Landlord {landlord.name} created successfully",
-                "errors": {},
-                "form_data": {},
-            },
+        return await render_new_landlord(
+            request,
+            success=f"Landlord `{landlord.name}` created successfully",
         )
 
     except Exception as exc:
         await session.rollback()
-        return templates.TemplateResponse(
-            "landlords-new.html",
-            {
-                "request": request,
-                "active": "new_landlord",
-                "errors": {"general": str(exc)},
-                "form_data": locals(),
-            },
+        return await render_new_landlord(
+            request,
+            errors={"general": str(exc)},
+            form_data=locals(),
         )
 
 
-# ─────────────────────────────────────────────
-# Edit Landlord
-# ─────────────────────────────────────────────
 @router.get("/edit-landlord", response_class=HTMLResponse)
 async def edit_landlord_form(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    id: Annotated[str | None, Query()] = None,
+    id: Optional[str] = Query(None),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
 
-    try:
-        landlord_id = uuid.UUID(id)
-    except Exception:
-        return templates.TemplateResponse(
-            "landlords-edit.html",
-            {
-                "request": request,
-                "active": "landlords",
-                "errors": "Invalid landlord ID",
-            },
-        )
+    landlord_id, errors = parse_uuid(id, "Invalid landlord ID")
+    if errors:
+        return await render_landlords(request, session, errors=errors)
 
-    landlord = (
-        await session.execute(select(Landlords).where(Landlords.id == landlord_id))
-    ).scalar_one_or_none()
-
-    if not landlord:
-        return templates.TemplateResponse(
-            "landlords-edit.html",
-            {
-                "request": request,
-                "active": "landlords",
-                "errors": f"Landlord `{id}` not found",
-            },
-        )
-
-    return templates.TemplateResponse(
-        "landlords-edit.html",
-        {
-            "request": request,
-            "active": "landlords",
-            "landlord": landlord,
-        },
-    )
+    return await render_edit_landlord(request, session, landlord_id)
 
 
 @router.post("/edit-landlord", response_class=HTMLResponse)
@@ -379,7 +408,7 @@ async def edit_landlord(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    id: Annotated[str | None, Query()] = None,
+    id: str = Query(...),
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(...),
@@ -395,31 +424,18 @@ async def edit_landlord(
 
     errors = validate_landlord_form(name, email, phone, id_number, commission_rate)
     if errors:
-        return templates.TemplateResponse(
-            "landlords-edit.html",
-            {
-                "request": request,
-                "active": "landlords",
-                "errors": errors,
-            },
-        )
+        landlord_id, _ = parse_uuid(id, "")
+        return await render_edit_landlord(request, session, landlord_id, errors=errors)
 
-    data = normalize_landlord_data(locals())
-
-    success, errors, landlord = await update_landlord(
+    success, errors, _ = await update_landlord(
         session,
         current_user,
         id,
-        data,
+        normalize_landlord_data(
+            name, email, phone, id_number,
+            kra_pin, address, bank_name, bank_account, commission_rate
+        ),
     )
 
-    return templates.TemplateResponse(
-        "landlords-edit.html",
-        {
-            "request": request,
-            "active": "landlords",
-            "success": success,
-            "errors": errors,
-            "landlord": landlord,
-        },
-    )
+    landlord_id, _ = parse_uuid(id, "")
+    return await render_edit_landlord(request, session, landlord_id, success, errors)

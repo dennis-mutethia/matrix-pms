@@ -10,7 +10,7 @@
     }
 
     .badge-vacant {
-        background-color: #f8d7da;
+        background-color: orange;
         color: #842029;
         border: 1px solid #f5c2c7;
     }
@@ -119,8 +119,13 @@
                             </span>
                             {% else %}
                             <span class="badge badge-vacant"><i class="bi bi-house-door"></i>
-                                Vacant </span>
+                                VACANT </span>
                             {% endif %}
+
+                            <span
+                                class="badge status-badge bg-{{ 'success' if house_unit.status=='active' else ('secondary' if house_unit.status=='inactive' else 'danger') }}">{{
+                                house_unit.status | capitalize }} </span>
+
                         </td>
                         <td class="text-center">{{ house_unit.rent }}</td>
                         <td class="text-center">{{ house_unit.rent_deposit }}</td>
@@ -132,12 +137,23 @@
                                 <a href="edit-house-unit?id={{ house_unit.id }}" class="btn btn-sm btn-outline-warning">
                                     <i class="bi bi-pencil"></i>
                                 </a>
+
+                                {% if house_unit.status=='active' %}
                                 <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
                                     data-bs-target="#deleteModal"
                                     onclick="setDeleteValues('{{ house_unit.id }}', '{{ house_unit.name }}')"
                                     title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
+                                {% else %}
+                                <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
+                                    data-bs-target="#restoreModal"
+                                    onclick="setRestoreValues('{{ house_unit.id }}', '{{ house_unit.name }}')"
+                                    title="Restore">
+                                    <i class="fas fa-refresh"></i>
+                                </button>
+                                {% endif %}
+
                             </div>
                         </td>
                     </tr>
