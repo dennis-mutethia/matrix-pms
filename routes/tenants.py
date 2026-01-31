@@ -101,7 +101,7 @@ async def update_tenant(
 
     tenant = (
         await session.execute(
-            select(tenant).where(House_Units.id == tenant_id_uuid)
+            select(Tenants).where(Tenants.id == tenant_id_uuid)
         )
     ).scalar_one_or_none()
 
@@ -119,7 +119,7 @@ async def update_tenant(
         await session.commit()
         await session.refresh(tenant)
 
-        return f"House Unit `{tenant.name}` {action} successfully", None, tenant
+        return f"Tenant `{tenant.name}` {action} successfully", None, tenant
 
     except Exception as exc:
         logger.error(exc)
@@ -257,7 +257,7 @@ async def render_edit_tenant(
 ):
     tenant = (
         await session.execute(
-            select(Tenants).where(Landlords.id == tenant_id)
+            select(Tenants).where(Tenants.id == tenant_id)
         )
     ).scalar_one_or_none()
 
@@ -268,10 +268,10 @@ async def render_edit_tenant(
         "tenants-edit.html",
         {
             "request": request,
-            "active": "landlords",
+            "active": "tenants",
             "tenant": tenant,
             "success": success,
-            "errors": errors or {},
+            "errors": errors,
         },
     )
 
@@ -332,7 +332,7 @@ async def post(
             session,
             current_user,
             delete_id if delete_id else restore_id,
-            {"status": "deleted" if delete_id else "active"},
+            { "status": "deleted" if delete_id else "unassigned" },
             "deleted" if delete_id else "restored",
         )
         
@@ -411,3 +411,70 @@ async def create_tenant(
         errors=errors,
         form_data=locals(),
     )
+    
+
+@router.get("/edit-tenant", response_class=HTMLResponse)
+async def edit_tenant_form(
+    request: Request,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
+    session: AsyncSession = Depends(get_session),
+    id: Optional[str] = Query(None),
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+    
+    tenant_id, errors = parse_uuid(id, "Invalid tenant ID")
+
+    return await render_edit_tenant(
+        request, 
+        session, 
+        tenant_id, 
+        errors=errors
+    )
+    
+
+@router.post("/edit-tenant", response_class=HTMLResponse)
+async def edit_tenant(
+    request: Request,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
+    session: AsyncSession = Depends(get_session),
+    id: str = Query(...),
+    name: str = Form(...),    
+    phone: str = Form(...),
+    id_number: str = Form(...),
+    email: str = Form(...),
+    next_of_kin: Optional[str] = Form(None),
+    next_of_kin_phone: Optional[str] = Form(None),
+    occupation: Optional[str] = Form(None),
+    employer: Optional[str] = Form(None),
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+
+    errors = validate_tenant_form(name, phone, id_number, email, next_of_kin_phone)
+    if errors:
+        return await render_new_tenant(
+            request, 
+            errors=errors, 
+            form_data=locals()
+        )
+        
+    success, errors, _ = await update_tenant(
+        session,
+        current_user,
+        id,
+        normalize_tenant_data(
+            name, phone, id_number, email,
+            next_of_kin, next_of_kin_phone, occupation, employer
+        )
+    )
+
+    tenant_id, _ = parse_uuid(id, "")
+    return await render_edit_tenant(
+        request, 
+        session, 
+        tenant_id, 
+        success=success, 
+        errors=errors
+    )
+

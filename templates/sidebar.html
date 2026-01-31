@@ -5,17 +5,13 @@
         <li><a href="landlords" class="nav-link {{ 'active' if active=='landlords' }}"><i class="fas fa-user-tie me-2"></i>Landlords</a></li>
         <li><a href="apartments" class="nav-link {{ 'active' if active=='apartments' }}"><i class="fas fa-building me-2"></i> Apartments</a></li>
         <li><a href="house-units" class="nav-link {{ 'active' if active=='house_units' }}"><i class="fas fa-house me-2"></i> House Units</a></li>
-        <li><a href="tenants" class="nav-link "><i class="fas fa-users me-2"></i> Tenants</a></li>
+        <li><a href="tenants" class="nav-link {{ 'active' if active=='tenants' }}"><i class="fas fa-users me-2"></i> Tenants</a></li>
 
-        <!-- ========== LANDLORD MANAGEMENT SECTION ========== -->
         <li class="section-divider">Property Section</li>
         <li><a href="new-landlord" class="nav-link {{ 'active' if active=='new_landlord' }}"><i class="fas fa-plus me-2"></i>Add New Landlord</a></li>
         <li><a href="new-apartment" class="nav-link {{ 'active' if active=='new_apartment' }}"><i class="fas fa-plus-circle me-2"></i> Add New Apartment</a></li>
         <li><a href="new-house-unit" class="nav-link {{ 'active' if active=='new_house_unit' }}"><i class="fas fa-plus-square me-2"></i> Add New House Unit</a></li>
-        <li><a href="add_tenant.php" class="nav-link "><i class="fas fa-user-plus me-2"></i> Add New Tenant</a></li>
-        <hr class="border-secondary opacity-25">
-        <li><a href="tenants_list.php" class="nav-link "><i class="fas fa-comment-alt me-2"></i> Tenants Summary</a></li>
-        <!-- ========== END LANDLORD SECTION ========== -->
+        <li><a href="new-tenant" class="nav-link {{ 'active' if active=='new_tenant' }}"><i class="fas fa-user-plus me-2"></i> Add New Tenant</a></li>
 
         <hr class="border-secondary opacity-25">
 

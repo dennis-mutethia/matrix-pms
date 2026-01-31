@@ -120,7 +120,7 @@ async def get_house_units_data(
         )
         .join(Apartments, House_Units.apartment_id == Apartments.id)
         .join(Landlords, Apartments.landlord_id == Landlords.id)
-        .join(Tenants, Tenants.house_unit_id == House_Units.id, isouter=True)
+        .join(Tenants, Tenants.house_unit_id == House_Units.id and Tenants.status == 'occupied' , isouter=True)
         .where(*filters)
         .order_by(House_Units.name)
     )
