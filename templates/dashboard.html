@@ -5,28 +5,34 @@
 <!-- Updated Stats Row with Landlords -->
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <div class="stat-card bg-apartment">
-            <h5>Apartments</h5>
-            <div class="stat-number">9</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card bg-house">
-            <h5>House Units</h5>
-            <div class="stat-number">112</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card bg-tenant">
-            <h5>Tenants</h5>
-            <div class="stat-number">26</div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <a href="landlords.php" class="text-decoration-none">
+        <a href="landlords" class="text-decoration-none">
             <div class="stat-card bg-landlord">
                 <h5><i class="fas fa-user-tie me-2"></i>Landlords</h5>
-                <div class="stat-number">1</div>
+                <div class="stat-number">{{ landlords }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="apartments" class="text-decoration-none">
+            <div class="stat-card bg-apartment">
+                <h5>Apartments</h5>
+                <div class="stat-number">{{ apartments }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="house-units" class="text-decoration-none">
+            <div class="stat-card bg-house">
+                <h5>House Units</h5>
+                <div class="stat-number">{{ house_units }}</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="tenants" class="text-decoration-none">
+            <div class="stat-card bg-tenant">
+                <h5>Tenants</h5>
+                <div class="stat-number">{{ tenants }}</div>
             </div>
         </a>
     </div>
