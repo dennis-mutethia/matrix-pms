@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="fas fa-house-user me-2" style="color: var(--brand-color)"></i>Assign
+                Tenant a House Unit
+            </h4>
+        </div>
+    </div> <br />
+
+    <div class="card card-custom">
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <h5 class="section-title"><i class="fas fa-user me-2"></i>Tenant Information</h5>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Full Name</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.name }}
+                        </figcaption>
+                    </figure>
+
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Phone No.</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.phone }}
+                        </figcaption>
+                    </figure>
+
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Email</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.email }}
+                        </figcaption>
+                    </figure>
+
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Id Number</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.id_number }}
+                        </figcaption>
+                    </figure>
+
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Next of Kin Name</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.next_of_kin }}
+                        </figcaption>
+                    </figure>
+
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Next of Kin Phone No.</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.next_of_kin_phone }}
+                        </figcaption>
+                    </figure>
+
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Occupation</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.occupation }}
+                        </figcaption>
+                    </figure>
+
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Employer</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.employer }}
+                        </figcaption>
+                    </figure>
+
+                </div>
+
+                <div class="col-md-3">
+                    <h5 class="section-title"><i class="fas fa-circle-info me-2"></i>House Unit Information</h5>
+                    <form method="GET">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Filter by
+                                Landlord</label>
+                            <select name="landlord_id" class="form-select" onchange="this.form.submit()">
+                                <option value="">-- All Landlords --</option>
+                                {% for _landlord in landlords %}
+                                <option value="{{ _landlord.id }}" {{ 'selected' if _landlord.id==landlord.id else ''
+                                    }}>
+                                    {{ _landlord.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Filter by
+                                Apartment</label>
+                            <select name="apartment_id" class="form-select" onchange="this.form.submit()">
+                                <option value="">-- All Apartments --</option>
+                                {% for _apartment in apartments %}
+                                <option value="{{ _apartment.id }}" {{ 'selected' if _apartment.id==apartment.id else ''
+                                    }}>
+                                    {{ _apartment.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-uppercase text-secondary">Select House
+                                Unit</label>
+                            <select name="house_unit_id" class="form-select" onchange="this.form.submit()">
+                                <option value="">-- All House Units --</option>
+                                {% for _house_unit in house_units %}
+                                <option value="{{ _house_unit.id }}" {{ 'selected' if _house_unit.id==house_unit.id
+                                    else '' }}>
+                                    {{ _house_unit.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                    </form>
+                </div>
+
+
+                <div class="col-md-3">
+                    <br />
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>House No</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ house_unit.name }}
+                        </figcaption>
+                    </figure>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>House Type</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ house_unit.type or 'One Bedroom' }}
+                        </figcaption>
+                    </figure>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Apartment</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ apartment.name }}
+                        </figcaption>
+                    </figure>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Location</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ apartment.location }}
+                        </figcaption>
+                    </figure>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Landlord</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ landlord.name }}
+                        </figcaption>
+                        <figcaption class="blockquote-footer">
+                            {{ landlord.phone }}
+                        </figcaption>
+                    </figure>
+                </div>
+
+                <div class="col-md-3">
+                    <h5 class="section-title"><i class="fas fa-lock me-2"></i>Selected House Unit Information</h5>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Rent Amount</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.rent | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Rent Deposit</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.rent_deposit | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Water Deposit</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.water_deposit | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Electricity Deposit</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.electricity_deposit | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Other Deposits</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.other_deposits | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Required Documents</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            Tenant Id copy
+                        </figcaption>
+                        <figcaption class="blockquote-footer">
+                            KRA PIN copy
+                        </figcaption>
+                        <figcaption class="blockquote-footer">
+                            Signed Tenancy Agreement
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Total Amount Payable (Rent + Deposits)</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (
+                            house_unit.rent | default(0) +
+                            house_unit.rent_deposit | default(0) +
+                            house_unit.water_deposit | default(0) +
+                            house_unit.electricity_deposit | default(0) +
+                            house_unit.other_deposits | default(0)
+                            ) | amount if house_unit else "0" }}
+
+                        </figcaption>
+                    </figure>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between">
+                <a href="/tenants" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Tenants
+                </a>
+                <form method="POST">
+                    <input type="hidden" name="house_unit_id" value="{{ house_unit.id }}">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-1"></i> Assign Tenant this House Unit
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

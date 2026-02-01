@@ -257,7 +257,7 @@ async def post(
     return await render_apartments(request, session, landlord_uuid, show_deleted, success, errors)
 
 
-@router.get("/new-apartment", response_class=HTMLResponse)
+@router.get("/apartments/new", response_class=HTMLResponse)
 async def new_apartment_form(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
@@ -269,7 +269,7 @@ async def new_apartment_form(
     return await render_new_apartment(request, session)
 
 
-@router.post("/new-apartment", response_class=HTMLResponse)
+@router.post("/apartments/new", response_class=HTMLResponse)
 async def create_apartment(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
@@ -301,12 +301,12 @@ async def create_apartment(
         return await render_new_apartment(request, session, errors=str(exc))
 
 
-@router.get("/edit-apartment", response_class=HTMLResponse)
+@router.get("/apartments/edit/{id}", response_class=HTMLResponse)
 async def edit_apartment_form(
-    request: Request,
+    request: Request,    
+    id: str,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    id: Optional[str] = Query(None),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
@@ -318,12 +318,12 @@ async def edit_apartment_form(
     return await render_edit_apartment(request, session, apartment_id)
 
 
-@router.post("/edit-apartment", response_class=HTMLResponse)
+@router.post("/apartments/{id}", response_class=HTMLResponse)
 async def edit_apartment(
     request: Request,
+    id: str,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    id: str = Query(...),
     name: str = Form(...),
     location: str = Form(...),
     landlord_id: str = Form(...),

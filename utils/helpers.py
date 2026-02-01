@@ -3,6 +3,7 @@ import hashlib
 import os
 from datetime import datetime, timedelta
 from typing import Optional
+import uuid
 
 from fastapi.responses import RedirectResponse
 import jwt
@@ -11,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from utils.database import get_session
-from utils.models import Apartments, Landlords, Users
+from utils.models import Apartments, House_Units, Landlords, Users
 
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -79,23 +80,49 @@ async def require_user(
 
 
 
-async def get_landlords(session: AsyncSession) -> list[dict]:
+async def get_landlords(
+    session: AsyncSession,
+) -> list[dict]:
     stmt = (
         select(Landlords)
         .where(Landlords.status != "deleted")
         .order_by(Landlords.name)
     )
-    landlords = (await session.execute(stmt)).scalars().all()
+    
+    return (await session.execute(stmt)).scalars().all()
 
-    return [{"id": l.id, "name": l.name} for l in landlords]
 
-
-async def get_apartments(session: AsyncSession) -> list[dict]:
+async def get_apartments(
+    session: AsyncSession,
+    landlord_id: Optional[uuid.UUID] = None,
+) -> list[dict]:
+    
+    filters = [Apartments.status != "deleted"]
+    if landlord_id:
+        filters.append(Apartments.landlord_id == landlord_id)
+        
     stmt = (
         select(Apartments)
-        .where(Apartments.status != "deleted")
+        .where(*filters)
         .order_by(Apartments.name)
     )
-    apartments = (await session.execute(stmt)).scalars().all()
+    
+    return  (await session.execute(stmt)).scalars().all()
 
-    return [{"id": a.id, "name": a.name} for a in apartments]
+
+async def get_house_units(
+    session: AsyncSession,
+    apartment_id: Optional[uuid.UUID] = None,
+) -> list[dict]:
+    
+    filters = [House_Units.status != "deleted"]
+    if apartment_id:
+        filters.append(House_Units.apartment_id == apartment_id)
+        
+    stmt = (
+        select(House_Units)
+        .where(*filters)
+        .order_by(House_Units.name)
+    )
+    
+    return (await session.execute(stmt)).scalars().all()

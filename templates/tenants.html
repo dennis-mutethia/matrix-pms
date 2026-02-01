@@ -21,7 +21,7 @@
             <h4 class="fw-bold mb-1"><i class="fas fa-user me-2" style="color: var(--brand-color)"></i>Tenants
             </h4>
         </div>
-        <a href="new-tenant" class="btn btn-warning">
+        <a href="/tenants/new" class="btn btn-warning">
             <i class="fas fa-plus-circle me-2"></i>Add New Tenant
         </a>
     </div> <br />
@@ -66,7 +66,7 @@
                 </div>
 
                 <div class="col-md-2">
-                    <a href="tenants" class="btn btn-outline-secondary w-100">Reset</a>
+                    <a href="/tenants" class="btn btn-outline-secondary w-100">Reset</a>
                 </div>
 
                 <div class="col-md d-flex justify-content-end ms-auto">
@@ -128,13 +128,13 @@
                             <!-- unassigned, occupied, vacated, deleted -->
 
                             {% if tenant.status == 'unassigned' %}
-                            <a href="assign-tenant-house?id={{ tenant.id }}" class="btn btn-sm btn-outline-info">
+                            <a href="/tenants/assign-house-unit/{{ tenant.id }}" class="btn btn-sm btn-outline-info">
                                 <i class="fas fa-house-user"></i> <b>Assign House</b>
                             </a>
                             {% endif %}
                             
                             {% if tenant.status != 'deleted' %}
-                            <a href="edit-tenant?id={{ tenant.id }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                            <a href="/tenants/edit/{{ tenant.id }}" class="btn btn-sm btn-outline-primary" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
                             {% endif %}

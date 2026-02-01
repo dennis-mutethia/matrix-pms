@@ -9,7 +9,7 @@
                 Apartments
             </h4>
         </div>
-        <a href="new-apartment" class="btn btn-warning">
+        <a href="/apartments/new" class="btn btn-warning">
             <i class="fas fa-plus-circle me-2"></i>Add New Apartment
         </a>
     </div> <br />
@@ -127,11 +127,11 @@
                         <td class="action-btns">
                             {% if apartment.status != 'deleted' %}
                             {% if apartment.houses > 0 %}
-                            <a href="house-units?apartment_id={{ apartment.id }}" class="btn btn-sm btn-outline-info">
+                            <a href="/house-units?apartment_id={{ apartment.id }}" class="btn btn-sm btn-outline-info">
                                 <i class="bi bi-eye"></i> Houses
                             </a>
                             {% endif %}
-                            <a href="edit-apartment?id={{ apartment.id }}" class="btn btn-sm btn-outline-primary"
+                            <a href="/apartments/edit/{{ apartment.id }}" class="btn btn-sm btn-outline-primary"
                                 title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>

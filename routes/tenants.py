@@ -10,7 +10,7 @@ from sqlmodel import select
 
 from core.templating import PHONE_REGEX, READ_ONLY_FIELDS, templates
 from utils.database import get_session
-from utils.helpers import get_apartments, get_landlords, require_user
+from utils.helpers import get_apartments, get_house_units, get_landlords, require_user
 from utils.models import Apartments, House_Units, Landlords, Tenants, Users
 
 logger = logging.getLogger(__name__)
@@ -276,6 +276,53 @@ async def render_edit_tenant(
     )
 
 
+async def render_assign_tenant_house_unit(
+    request: Request,
+    session: AsyncSession,
+    tenant_id: uuid.UUID, 
+    landlord_id: Optional[uuid.UUID] = None,  
+    apartment_id: Optional[uuid.UUID] = None,
+    house_unit_id: Optional[uuid.UUID] = None,
+    success: Optional[str] = None,
+    errors: Optional[Dict] = None,
+):
+    tenant = (
+        await session.execute(
+            select(Tenants).where(Tenants.id == tenant_id)
+        )
+    ).scalar_one_or_none()
+    
+    if not tenant:
+        errors = "Tenant not found"
+    
+    house_units = await get_house_units(session, apartment_id)
+    house_unit = next((a for a in house_units if a.id == house_unit_id), None)  
+    
+    apartment_id = house_unit.apartment_id if house_unit else apartment_id
+    apartments = await get_apartments(session, landlord_id)
+    apartment = next((a for a in apartments if a.id == apartment_id), None) 
+    
+    landlord_id = apartment.landlord_id if apartment else landlord_id
+    landlords = await get_landlords(session)    
+    landlord = next((a for a in landlords if a.id == landlord_id), None)
+
+    return templates.TemplateResponse(
+        "tenants-assign-house-unit.html",
+        {
+            "request": request,
+            "active": "tenants",
+            "tenant": tenant,
+            "landlords": landlords,
+            "apartments": apartments,
+            "house_units": house_units,
+            "landlord": landlord,
+            "apartment": apartment,
+            "house_unit": house_unit,
+            "success": success,
+            "errors": errors,
+        },
+    )
+
 # ─────────────────────────────────────────────
 # Routes
 # ─────────────────────────────────────────────
@@ -348,7 +395,7 @@ async def post(
     )
 
 
-@router.get("/new-tenant", response_class=HTMLResponse)
+@router.get("/tenants/new", response_class=HTMLResponse)
 async def new_tenant_form(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)]
@@ -359,7 +406,7 @@ async def new_tenant_form(
     return await render_new_tenant(request)
 
 
-@router.post("/new-tenant", response_class=HTMLResponse)
+@router.post("/tenants/new", response_class=HTMLResponse)
 async def create_tenant(
     request: Request,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
@@ -413,12 +460,12 @@ async def create_tenant(
     )
     
 
-@router.get("/edit-tenant", response_class=HTMLResponse)
+@router.get("/tenants/edit/{id}", response_class=HTMLResponse)
 async def edit_tenant_form(
     request: Request,
+    id: str,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    id: Optional[str] = Query(None),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
@@ -433,12 +480,12 @@ async def edit_tenant_form(
     )
     
 
-@router.post("/edit-tenant", response_class=HTMLResponse)
+@router.post("/tenants/edit/{id}", response_class=HTMLResponse)
 async def edit_tenant(
     request: Request,
+    id: str,
     current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
     session: AsyncSession = Depends(get_session),
-    id: str = Query(...),
     name: str = Form(...),    
     phone: str = Form(...),
     id_number: str = Form(...),
@@ -475,6 +522,69 @@ async def edit_tenant(
         session, 
         tenant_id, 
         success=success, 
+        errors=errors
+    )
+
+
+@router.get("/tenants/assign-house-unit/{id}", response_class=HTMLResponse)
+async def assign_tenant_house_unit_form(
+    request: Request,
+    id: str,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
+    session: AsyncSession = Depends(get_session),      
+    landlord_id: Optional[str] = Query(None),
+    apartment_id: Optional[str] = Query(None),
+    house_unit_id: Optional[str] = Query(None),
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+    
+    tenant_id, errors = parse_uuid(id, "Invalid tenant ID")
+    landlord_id, errors = parse_uuid(landlord_id, "Invalid tenant ID")
+    apartment_id, errors = parse_uuid(apartment_id, "Invalid tenant ID")
+    house_unit_id, errors = parse_uuid(house_unit_id, "Invalid tenant ID")
+
+    return await render_assign_tenant_house_unit(
+        request, 
+        session, 
+        tenant_id, 
+        landlord_id,
+        apartment_id,
+        house_unit_id,
+        errors=errors
+    )
+    
+
+@router.post("/tenants/assign-house-unit/{id}", response_class=HTMLResponse)
+async def assign_tenant_house_unit(
+    request: Request,
+    id: str,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
+    session: AsyncSession = Depends(get_session),
+    house_unit_id: str = Form(...),  
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+    
+    house_unit_id, errors = parse_uuid(house_unit_id, "")
+    
+    success, errors, _ = await update_tenant(
+            session,
+            current_user,
+            id,
+            { 
+             "status": "occupied",
+             "house_unit_id": house_unit_id
+            },
+            "assigned house"
+        )
+            
+    return await render_assign_tenant_house_unit(
+        request, 
+        session, 
+        tenant_id=id, 
+        house_unit_id=house_unit_id,
+        success=success,
         errors=errors
     )
 

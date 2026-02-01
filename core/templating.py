@@ -15,6 +15,14 @@ templates = Jinja2Templates(directory="templates")
 
 templates.env.globals["now"] = datetime.now
 
+def format_amount(value):
+    try:
+        return f"{float(value):,.0f}"
+    except (TypeError, ValueError):
+        return ""
+
+templates.env.filters["amount"] = format_amount
+
 def login_required(func):
     @wraps(func)
     async def wrapper(request: Request, **kwargs):
