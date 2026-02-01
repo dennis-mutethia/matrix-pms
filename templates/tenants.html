@@ -115,9 +115,9 @@
                             <strong>{{ tenant.phone }}</strong>
                             <br><small class="text-muted">{{ tenant.email }}</small>
                         </td>
-                        <td>{{ tenant.house_unit }}</td>
-                        <td>{{ tenant.apartment }}</td>
-                        <td>{{ tenant.landlord }}</td>
+                        <td><a href="/house-units/{{ tenant.house_unit.id }}" class="hover-decor">{{ tenant.house_unit.name }}</a></td>
+                        <td><a href="/apartments/{{ tenant.landlord.id }}" class="hover-decor">{{ tenant.apartment.name }}</a></td>
+                        <td><a href="/landlords/{{ tenant.landlord.id }}" class="hover-decor">{{ tenant.landlord.name }}</a></td>
                         <td>
                             <span
                                 class="badge status-badge bg-{{ 'success' if tenant.status=='occupied' else ('secondary' if tenant.status=='vacated' else 'danger') }}">{{

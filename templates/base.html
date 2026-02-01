@@ -11,6 +11,25 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="icon" type="image/png" href="/static/images/favicon.png">
+    <style>
+        .hover-decor {
+            text-decoration: none;
+            /* no underline by default */
+            color: inherit;
+            /* inherit text color */
+            cursor: pointer;
+            /* hand pointer */
+            transition: all 0.2s;
+            /* smooth effect */
+        }
+
+        .hover-decor:hover {
+            text-decoration: underline;
+            /* underline on hover */
+            color: #0d6efd;
+            /* optional: change color on hover */
+        }
+    </style>
 </head>
 
 <body>
@@ -35,7 +54,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="modal fade" id="restoreModal" tabindex="-1" role="dialog" aria-labelledby="restoreModal"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog" role="document">

@@ -116,18 +116,16 @@
                     <tr>
                         <td>{{ loop.index }}.</td>
                         <td class="ps-3 fw-bold">{{ house_unit.name }}</td>
-                        <td><a href="/apartments/{{ house_unit.apartment_id }}">{{ house_unit.apartment }}</a></td>
-                        <td><a href="/landlords/{{ house_unit.landlord_id }}">{{ house_unit.landlord }}</a></td>
+                        <td><a href="/apartments/{{ house_unit.apartment.id }}" class="hover-decor">{{ house_unit.apartment.name }}</a></td>
+                        <td><a href="/landlords/{{ house_unit.landlord.id }}" class="hover-decor">{{ house_unit.landlord.name }}</a></td>
                         <td>
                             {% if house_unit.tenant %}
-                            <a href="/tenants/{{ house_units.tenant_id }}" class="badge badge-occupied"><i class="bi bi-person-fill"></i> {{ house_unit.tenant }}
+                            <a href="/tenants/{{ house_unit.tenant.id }}" class="badge badge-occupied hover-decor"><i class="bi bi-person-fill"></i> {{ house_unit.tenant.name }}
                             </a>
-                            {% else %}
+                            {% elif house_unit.status != 'deleted' %}
                             <span class="badge badge-vacant"><i class="bi bi-house-door"></i>
                                 VACANT </span>
-                            {% endif %}
-                            
-                            {% if house_unit.status == 'deleted' %}
+                            {% else %}
                             <span
                                 class="badge status-badge bg-{{ 'success' if house_unit.status=='active' else ('secondary' if house_unit.status=='inactive' else 'danger') }}">{{
                                 house_unit.status | capitalize }} </span>

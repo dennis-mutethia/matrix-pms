@@ -159,9 +159,9 @@ async def get_tenants_data(
     stmt = (
         select(
             Tenants,
-            House_Units.name.label("house_unit"),
-            Apartments.name.label("apartment"),
-            Landlords.name.label("landlord")
+            House_Units,
+            Apartments,
+            Landlords
         )
         .join(House_Units, Tenants.house_unit_id == House_Units.id, isouter=True)
         .join(Apartments, House_Units.apartment_id == Apartments.id, isouter=True)

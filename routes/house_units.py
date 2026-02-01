@@ -114,9 +114,9 @@ async def get_house_units_data(
     stmt = (
         select(
             House_Units,
-            Apartments.name.label("apartment"),
-            Landlords.name.label("landlord"),
-            Tenants.name.label("tenant")
+            Apartments,
+            Landlords,
+            Tenants
         )
         .join(Apartments, House_Units.apartment_id == Apartments.id)
         .join(Landlords, Apartments.landlord_id == Landlords.id)
@@ -362,7 +362,7 @@ async def create_house_unit(
     )
     
 
-@router.get("/house-units/{id}", response_class=HTMLResponse)
+@router.get("/house-units/edit/{id}", response_class=HTMLResponse)
 async def edit_house_unit_form(
     request: Request,
     id: str,
@@ -382,7 +382,7 @@ async def edit_house_unit_form(
     )
     
 
-@router.post("/house-units/{id}", response_class=HTMLResponse)
+@router.post("/house-units/edit/{id}", response_class=HTMLResponse)
 async def edit_house_unit(
     request: Request,
     id: str,

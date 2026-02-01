@@ -77,8 +77,7 @@ async def require_user(
             url=f"/login?next={request.url.path}",
             status_code=status.HTTP_303_SEE_OTHER,
         )
-
-
+        
 
 async def get_landlords(
     session: AsyncSession,

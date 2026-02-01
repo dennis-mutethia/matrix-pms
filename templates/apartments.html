@@ -112,7 +112,7 @@
                         <td>{{ loop.index }}.</td>
                         <td class="ps-3 fw-bold">{{ apartment.name }}</td>
                         <td>{{ apartment.location }}</td>
-                        <td>{{ apartment.landlord }}</td>
+                        <td><a href="/landlords/{{ apartment.landlord.id }}" class="hover-decor">{{ apartment.landlord.name }}</a></td>
                         <td class="text-center">
                             <span class="badge rounded-pill bg-light text-dark border">{{ apartment.houses }}</span>
                         </td>

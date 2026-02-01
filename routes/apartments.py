@@ -111,7 +111,7 @@ async def render_apartments(
     stmt = (
         select(
             Apartments,
-            Landlords.name.label("landlord"),
+            Landlords,
             func.count(House_Units.id).label("houses"),
             func.count(Tenants.id).label("tenants")
         )
