@@ -96,7 +96,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-uppercase text-secondary">Filter by
                                 Landlord</label>
-                            <select name="landlord_id" class="form-select" onchange="this.form.submit()">
+                            <select name="landlord_id" class="form-select" onchange="this.form.requestSubmit()">
                                 <option value="">-- All Landlords --</option>
                                 {% for _landlord in landlords %}
                                 <option value="{{ _landlord.id }}" {{ 'selected' if _landlord.id==landlord.id else ''
@@ -110,7 +110,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-uppercase text-secondary">Filter by
                                 Apartment</label>
-                            <select name="apartment_id" class="form-select" onchange="this.form.submit()">
+                            <select name="apartment_id" class="form-select" onchange="this.form.requestSubmit()">
                                 <option value="">-- All Apartments --</option>
                                 {% for _apartment in apartments %}
                                 <option value="{{ _apartment.id }}" {{ 'selected' if _apartment.id==apartment.id else ''
@@ -124,7 +124,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-uppercase text-secondary">Select House
                                 Unit</label>
-                            <select name="house_unit_id" class="form-select" onchange="this.form.submit()">
+                            <select name="house_unit_id" class="form-select" onchange="this.form.requestSubmit()">
                                 <option value="">-- All House Units --</option>
                                 {% for _house_unit in house_units %}
                                 <option value="{{ _house_unit.id }}" {{ 'selected' if _house_unit.id==house_unit.id

@@ -33,7 +33,7 @@
 
                 <div class="col-md-3">
                     <label class="small fw-bold text-muted">Filter by Landlord</label>
-                    <select name="landlord_id" class="form-select" onchange="this.form.submit()">
+                    <select name="landlord_id" class="form-select" onchange="this.form.requestSubmit()">
                         <option value="">-- All Landlords --</option>
                         {% for landlord in landlords %}
                         <option value="{{ landlord.id }}" {{ 'selected' if landlord_id==landlord.id else '' }}>
@@ -45,8 +45,8 @@
 
                 <div class="col-md-3">
                     <label class="small fw-bold text-muted">Filter by Apartment</label>
-                    <select name="apartment_id" class="form-select" onchange="this.form.submit()">
-                        <option value="">-- All Landlords --</option>
+                    <select name="apartment_id" class="form-select" onchange="this.form.requestSubmit()">
+                        <option value="">-- All Apartments --</option>
                         {% for apartment in apartments %}
                         <option value="{{ apartment.id }}" {{ 'selected' if landlord_id==apartment.id else '' }}>
                             {{ apartment.name }}
@@ -57,7 +57,7 @@
                 
                 <div class="col-md-2">
                     <label class="small fw-bold text-muted">Occupancy Status</label>
-                    <select name="status" class="form-select" onchange="this.form.submit()">
+                    <select name="status" class="form-select" onchange="this.form.requestSubmit()">
                         <option value="">-- All Statuses --</option>
                         <option value="occupied" {{ 'selected' if status=='occupied' else '' }}>Occupied</option>
                         <option value="vacant" {{ 'selected' if status=='vacant' else '' }}>Vacant</option>
@@ -75,7 +75,7 @@
 
                         <input class="form-check-input" type="checkbox" id="showDeleted" name="show_deleted"
                             value="true" {% if request.query_params.get('show_deleted')=='true' %}checked{% endif %}
-                            onchange="this.form.submit()">
+                            onchange="this.form.requestSubmit()">
                         <label class="small fw-bold text-muted form-check-label" for="showDeleted">
                             Show Deleted
                         </label>

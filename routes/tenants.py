@@ -189,7 +189,7 @@ async def get_tenants_data(
 
     return (
         tenants,
-        await get_apartments(session),
+        await get_apartments(session, landlord_id),
         await get_landlords(session),
     )
 

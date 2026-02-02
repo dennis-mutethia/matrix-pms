@@ -146,7 +146,7 @@ async def get_house_units_data(
 
     return (
         house_units,
-        await get_apartments(session),
+        await get_apartments(session, landlord_id),
         await get_landlords(session),
     )
 
