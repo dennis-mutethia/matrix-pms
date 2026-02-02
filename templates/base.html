@@ -186,7 +186,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             const loader = document.getElementById("loading-overlay");
 
-            // Forms (already handled, but keeping here for completeness)
+            // Forms
             document.querySelectorAll("form:not([data-no-loader])").forEach(form => {
                 form.addEventListener("submit", function () {
                     loader.style.display = "flex";
