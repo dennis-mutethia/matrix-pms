@@ -183,21 +183,47 @@
             window.location.href = url.toString();
         }
 
-    </script>
-    <script>
         document.addEventListener("DOMContentLoaded", function () {
-            document.querySelectorAll("form").forEach(form => {
-                form.addEventListener("submit", function () {
-                    // Show loader
-                    document.getElementById("loading-overlay").style.display = "flex";
+            const loader = document.getElementById("loading-overlay");
 
-                    // Disable all submit buttons in this form
+            // Forms (already handled, but keeping here for completeness)
+            document.querySelectorAll("form:not([data-no-loader])").forEach(form => {
+                form.addEventListener("submit", function () {
+                    loader.style.display = "flex";
+
                     form.querySelectorAll("button[type=submit], input[type=submit]")
                         .forEach(btn => btn.disabled = true);
                 });
             });
+
+            // Links
+            document.querySelectorAll("a[href]").forEach(link => {
+                link.addEventListener("click", function (e) {
+                    const href = link.getAttribute("href");
+
+                    // Ignore anchors, empty links, and JS links
+                    if (
+                        !href ||
+                        href.startsWith("#") ||
+                        href.startsWith("javascript:")
+                    ) return;
+
+                    // Ignore new tab/window
+                    if (link.target === "_blank") return;
+
+                    // Ignore explicit opt-out
+                    if (link.hasAttribute("data-no-loader")) return;
+
+                    // Ignore modified clicks (Ctrl, Cmd, middle-click)
+                    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
+
+                    // Show loader
+                    loader.style.display = "flex";
+                });
+            });
         });
     </script>
+
 
     {% block scripts %}
     <!-- Extra js scripts goes here -->
