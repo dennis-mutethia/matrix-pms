@@ -12,7 +12,7 @@ from typing import Annotated
 from core.templating import READ_ONLY_FIELDS, templates
 from utils.database import get_session
 from utils.helpers import get_landlords, require_user
-from utils.models import Apartments, House_Units, Landlords, Tenants, Users
+from utils.models import Apartments, House_Units, Landlords, Occupancy, Users
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,17 @@ def normalize_apartment_data(
     name: str,
     location: str,
     landlord_id: str,
+    water_unit_rate: float, 
+    garbage_charge: float, 
+    service_charge: float
 ) -> Dict:
     return {
         "name": name.strip().upper(),
         "location": location.strip().upper(),
         "landlord_id": landlord_id,
+        "water_unit_rate": water_unit_rate,
+        "garbage_charge": garbage_charge,
+        "service_charge": service_charge
     }
 
 
@@ -113,11 +119,11 @@ async def render_apartments(
             Apartments,
             Landlords,
             func.count(House_Units.id).label("houses"),
-            func.count(Tenants.id).label("tenants")
+            func.count(Occupancy.id).label("tenants")
         )
         .join(Landlords, Apartments.landlord_id == Landlords.id, isouter=True)
         .join(House_Units, House_Units.apartment_id == Apartments.id, isouter=True)
-        .join(Tenants, Tenants.house_unit_id == House_Units.id, isouter=True)
+        .join(Occupancy, Occupancy.house_unit_id == House_Units.id and Occupancy.end_date is None , isouter=True)
         .where(*filters)
         .group_by(Apartments.id, Landlords.id)
         .order_by(Apartments.name)
@@ -277,12 +283,15 @@ async def create_apartment(
     name: str = Form(...),
     location: str = Form(...),
     landlord_id: str = Form(...),
+    water_unit_rate: float = Form(...),
+    garbage_charge: float = Form(...),
+    service_charge: float = Form(...),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
-
+    
     apartment = Apartments(
-        **normalize_apartment_data(name, location, landlord_id),
+        **normalize_apartment_data(name, location, landlord_id, water_unit_rate, garbage_charge, service_charge),
         created_at=datetime.utcnow(),
         created_by=current_user.id,
     )
@@ -318,7 +327,7 @@ async def edit_apartment_form(
     return await render_edit_apartment(request, session, apartment_id)
 
 
-@router.post("/apartments/{id}", response_class=HTMLResponse)
+@router.post("/apartments/edit/{id}", response_class=HTMLResponse)
 async def edit_apartment(
     request: Request,
     id: str,
@@ -327,6 +336,9 @@ async def edit_apartment(
     name: str = Form(...),
     location: str = Form(...),
     landlord_id: str = Form(...),
+    water_unit_rate: float = Form(...),
+    garbage_charge: float = Form(...),
+    service_charge: float = Form(...),
 ):
     if isinstance(current_user, RedirectResponse):
         return current_user
@@ -335,7 +347,7 @@ async def edit_apartment(
         session,
         current_user,
         id,
-        normalize_apartment_data(name, location, landlord_id),
+        normalize_apartment_data(name, location, landlord_id, water_unit_rate, garbage_charge, service_charge)
     )
 
     apartment_id, _ = parse_uuid(id, "")

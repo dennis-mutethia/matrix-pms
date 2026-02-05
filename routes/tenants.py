@@ -194,7 +194,6 @@ async def get_tenants_data(
     )
 
 
-
 # ─────────────────────────────────────────────
 # Renderers
 # ─────────────────────────────────────────────
@@ -228,7 +227,6 @@ async def render_tenants(
         },
     )
     
-
 
 async def render_new_tenant(
     request: Request,
@@ -315,6 +313,50 @@ async def render_assign_tenant_house_unit(
             "landlords": landlords,
             "apartments": apartments,
             "house_units": house_units,
+            "landlord": landlord,
+            "apartment": apartment,
+            "house_unit": house_unit,
+            "success": success,
+            "errors": errors,
+        },
+    )
+
+async def render_tenant_details(
+    request: Request,
+    session: AsyncSession,
+    tenant_id: uuid.UUID, 
+    success: Optional[str] = None,
+    errors: Optional[str] = None,
+):
+    stmt = (
+        select(
+            Tenants,
+            House_Units,
+            Apartments,
+            Landlords,
+        )
+        .join(House_Units, Tenants.house_unit_id == House_Units.id, isouter=True)
+        .join(Apartments, House_Units.apartment_id == Apartments.id, isouter=True)
+        .join(Landlords, Apartments.landlord_id == Landlords.id, isouter=True)
+        .where(Tenants.id == tenant_id)
+        .order_by(Tenants.name)
+    )
+
+    result = await session.execute(stmt)
+    row = result.one_or_none()
+
+    if not row:
+        errors = "Tenant not found"
+        tenant = house_unit = apartment = landlord = None
+    else:
+        tenant, house_unit, apartment, landlord = row
+
+    return templates.TemplateResponse(
+        "tenant-details.html",
+        {
+            "request": request,
+            "active": "tenants",
+            "tenant": tenant,
             "landlord": landlord,
             "apartment": apartment,
             "house_unit": house_unit,
@@ -588,3 +630,23 @@ async def assign_tenant_house_unit(
         errors=errors
     )
 
+
+@router.get("/tenants/{id}", response_class=HTMLResponse)
+async def tenant_details(
+    request: Request,
+    id: str,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
+    session: AsyncSession = Depends(get_session)
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+    
+    tenant_id, errors = parse_uuid(id, "Invalid tenant ID")
+
+    return await render_tenant_details(
+        request, 
+        session, 
+        tenant_id, 
+        errors=errors
+    )
+    

@@ -234,6 +234,51 @@ async def render_edit_house_unit(
     )
 
 
+async def render_house_unit_details(
+    request: Request,
+    session: AsyncSession,
+    house_unit_id: uuid.UUID, 
+    success: Optional[str] = None,
+    errors: Optional[str] = None,
+):
+    stmt = (
+        select(
+            House_Units,
+            Apartments,
+            Landlords,
+            Tenants,
+        )
+        .join(Apartments, House_Units.apartment_id == Apartments.id)
+        .join(Landlords, Apartments.landlord_id == Landlords.id)
+        .join(Tenants, Tenants.house_unit_id == House_Units.id, isouter=True)
+        .where(House_Units.id == house_unit_id)
+        .order_by(Tenants.name)
+    )
+
+    result = await session.execute(stmt)
+    row = result.one_or_none()
+
+    if not row:
+        errors = "House Unit not found"
+        house_unit = apartment = landlord = tenant = None
+    else:
+        house_unit, apartment, landlord, tenant = row
+
+    return templates.TemplateResponse(
+        "house-unit-details.html",
+        {
+            "request": request,
+            "active": "house_units",
+            "house_unit": house_unit,
+            "landlord": landlord,
+            "apartment": apartment,
+            "tenant": tenant,
+            "success": success,
+            "errors": errors,
+        },
+    )
+
+
 # ─────────────────────────────────────────────
 # Routes
 # ─────────────────────────────────────────────
@@ -416,3 +461,23 @@ async def edit_house_unit(
         errors=errors
     )
 
+
+@router.get("/house-units/{id}", response_class=HTMLResponse)
+async def tenant_details(
+    request: Request,
+    id: str,
+    current_user: Annotated[Users | RedirectResponse, Depends(require_user)],
+    session: AsyncSession = Depends(get_session)
+):
+    if isinstance(current_user, RedirectResponse):
+        return current_user
+    
+    house_unit_id, errors = parse_uuid(id, "Invalid house unit ID")
+
+    return await render_house_unit_details(
+        request, 
+        session, 
+        house_unit_id, 
+        errors=errors
+    )
+    

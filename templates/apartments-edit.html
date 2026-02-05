@@ -47,6 +47,31 @@
                         </div>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase text-secondary">Water Rate per Unit</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
+                            <input type="number" name="water_unit_rate" class="form-control" value="{{ apartment.water_unit_rate }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase text-secondary">Garbage Charge (Monthly)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
+                            <input type="number" name="garbage_charge" class="form-control" value="{{ apartment.garbage_charge }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase text-secondary">Service Charge (Monthly) </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
+                            <input type="number" name="service_charge" class="form-control" value="{{ apartment.service_charge }}" required>
+                        </div>
+                    </div>
+
+
                     <div class="d-flex justify-content-between">
                         <a href="/apartments" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Back to Apartments

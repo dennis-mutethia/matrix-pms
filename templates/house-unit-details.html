@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="fas fa-house me-2" style="color: var(--brand-color)"></i>House Unit
+                Summary
+            </h4>
+        </div>
+    </div> <br />
+
+    <div class="card card-custom">
+        <div class="card-body p-4">
+            <div class="row">
+                
+                <div class="col-md-2">
+                    <h5 class="section-title"><i class="fas fa-house me-2"></i>House Details</h5>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>House No</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ house_unit.name }}
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>House Type</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ house_unit.type or 'One Bedroom' }}
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Apartment</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ apartment.name }}
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Location</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ apartment.location }}
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Landlord</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ landlord.name }}
+                        </figcaption>
+                        <figcaption class="blockquote-footer">
+                            {{ landlord.phone }}
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Rent Amount</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.rent | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Rent Deposit</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.rent_deposit | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Water Deposit</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.water_deposit | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Electricity Deposit</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.electricity_deposit | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                    <figure>
+                        <blockquote class="blockquote">
+                            <h6>Other Deposits</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.other_deposits | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                </div>
+                
+                <div class="col-md-8">
+                    <h5 class="section-title text-center"><i class="fas fa-coins me-2"></i>Monthly Payables</h5>
+                    <div class="table-responsive">
+                        <table id="myTable" class="table table-hover align-middle mb-0">
+                            <thead class="table-brand-header">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Month</th>
+                                    <th>Rent</th>
+                                    <th>Water</th>
+                                    <th>Others</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="col-md-2">
+                    <h5 class="section-title text-end"><i class="fas fa-user me-2"></i>Tenant Information</h5>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Full Name</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.name }}
+                        </figcaption>
+                    </figure>
+
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Phone No.</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.phone }}
+                        </figcaption>
+                    </figure>
+
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Email</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.email }}
+                        </figcaption>
+                    </figure>
+
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Id Number</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.id_number }}
+                        </figcaption>
+                    </figure>
+
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Next of Kin Name</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.next_of_kin }}
+                        </figcaption>
+                    </figure>
+
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Next of Kin Phone No.</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.next_of_kin_phone }}
+                        </figcaption>
+                    </figure>
+
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Occupation</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.occupation }}
+                        </figcaption>
+                    </figure>
+
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Employer</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ tenant.employer }}
+                        </figcaption>
+                    </figure>
+                    
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Bills</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            {{ (house_unit.rent | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+                    <figure class="text-end">
+                        <blockquote class="blockquote">
+                            <h6>Arrears</h6>
+                        </blockquote>
+                        <figcaption class="blockquote-footer text-danger">
+                            {{ (house_unit.rent | default(0)) | amount }}
+                        </figcaption>
+                    </figure>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between">
+                <a href="/house-units" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to House Units
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+    $(document).ready(function () {
+        $('#myTable').DataTable({ pageLength: 10, order: [[1, 'asc']] });
+    });
+</script>
+
+{% endblock %}

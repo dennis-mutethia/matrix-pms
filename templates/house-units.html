@@ -138,6 +138,11 @@
                         <td class="text-center">{{ house_unit.electricity_deposit }}</td>
                         <td class="text-center">{{ house_unit.other_deposits }}</td>
                         <td class="action-btns text-center">
+
+                            <a href="/house-units/{{ house_unit.id }}" class="btn btn-sm btn-outline-info" title="View Details" >
+                                <i class="bi bi-eye"></i> Details
+                            </a>
+
                             {% if house_unit.status != 'deleted' %}
                             <a href="/house-units/edit/{{ house_unit.id }}" class="btn btn-sm btn-outline-primary" title="Edit">
                                 <i class="fas fa-edit"></i>
